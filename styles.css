@@ -1,4 +1,18 @@
-/* Sets all the text color to red! */
-body {
-    color: red;
+.block-language-vid{
+	display: flex;
+	flex-direction: row;
+}
+
+.block-language-vid .thumbnail-img{
+	width: 150px;
+}
+
+.block-language-vid .thumbnail-title{
+	background: rgba(0,0,0,0.1);
+	width: 200px;
+	margin-left: 10px;
+}
+
+.block-language-vid .thumbnail-error{
+	color: var(--text-error);
 }

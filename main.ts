@@ -1,81 +1,118 @@
-import { App, Editor, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting } from 'obsidian';
+// import https from 'https';
+import axios from 'axios';
+import { App, Editor, MarkdownRenderer, MarkdownRenderChild, Plugin } from 'obsidian';
+import { ThumbySettingTab } from './settings';
 
-// Remember to rename these classes and interfaces!
-
-interface MyPluginSettings {
+interface ThumbySettings {
 	mySetting: string;
+	download: boolean;
 }
 
-const DEFAULT_SETTINGS: MyPluginSettings = {
-	mySetting: 'default'
+const DEFAULT_SETTINGS: ThumbySettings = {
+	mySetting: 'default',
+	download: false
 }
 
-export default class MyPlugin extends Plugin {
-	settings: MyPluginSettings;
+export default class Thumby extends Plugin {
+	settings: ThumbySettings;
 
 	async onload() {
-		await this.loadSettings();
+		this.registerMarkdownCodeBlockProcessor('vid', async (source, el, ctx) => {
+			console.log('Vid block: ' + source);
+			const url = source.trim().split('\n')[0];
+			let id = '';
 
-		// This creates an icon in the left ribbon.
-		const ribbonIconEl = this.addRibbonIcon('dice', 'Sample Plugin', (evt: MouseEvent) => {
-			// Called when the user clicks the icon.
-			new Notice('This is a notice!');
-		});
-		// Perform additional things with the ribbon
-		ribbonIconEl.addClass('my-plugin-ribbon-class');
-
-		// This adds a status bar item to the bottom of the app. Does not work on mobile apps.
-		const statusBarItemEl = this.addStatusBarItem();
-		statusBarItemEl.setText('Status Bar Text');
-
-		// This adds a simple command that can be triggered anywhere
-		this.addCommand({
-			id: 'open-sample-modal-simple',
-			name: 'Open sample modal (simple)',
-			callback: () => {
-				new SampleModal(this.app).open();
-			}
-		});
-		// This adds an editor command that can perform some operation on the current editor instance
-		this.addCommand({
-			id: 'sample-editor-command',
-			name: 'Sample editor command',
-			editorCallback: (editor: Editor, view: MarkdownView) => {
-				console.log(editor.getSelection());
-				editor.replaceSelection('Sample Editor Command');
-			}
-		});
-		// This adds a complex command that can check whether the current state of the app allows execution of the command
-		this.addCommand({
-			id: 'open-sample-modal-complex',
-			name: 'Open sample modal (complex)',
-			checkCallback: (checking: boolean) => {
-				// Conditions to check
-				const markdownView = this.app.workspace.getActiveViewOfType(MarkdownView);
-				if (markdownView) {
-					// If checking is true, we're simply "checking" if the command can be run.
-					// If checking is false, then we want to actually perform the operation.
-					if (!checking) {
-						new SampleModal(this.app).open();
-					}
-
-					// This command will only show up in Command Palette when the check function returns true
-					return true;
+			if (url.contains('https://www.youtube.com/watch?v=')){
+				const matches = url.match(/v=([-\w\d]+)/);
+				if(matches !== null){
+					id = matches[1]
 				}
 			}
+			else if (url.contains('https://youtu.be/')){
+				const matches = url.match(/youtu.be\/([-\w\d]+)/);
+				if(matches !== null){
+					id = matches[1]
+				}
+			}
+
+			const sourcePath =
+					typeof ctx == "string"
+						? ctx
+						: ctx?.sourcePath ??
+							this.app.workspace.getActiveFile()?.path ??
+							"";
+
+			if(id === ''){
+				// const msg = el.createDiv({text: "Link has no video ID"}).addClass('thumbnail-error');
+				const msg = el.createDiv();
+				const component = new MarkdownRenderChild(msg);
+
+				MarkdownRenderer.renderMarkdown(
+					'>[!WARNING] URL has no video ID',
+					msg,
+					sourcePath,
+					component
+					);
+				// el.createDiv({text: `>[!FAIL] Link has no video ID`});
+				return;
+			}
+
+			const formattedUrl = `https://www.youtube.com/watch?v=${id}`;
+			// https://www.youtube.com/watch?v=hCc0OsyMbQk
+			// https://youtu.be/hCc0OsyMbQk
+			// https://youtu.be/hCc0OsyMbQk?t=320
+
+			let thumbnail = '';
+			let title = '';
+			let foundVid = false;
+			let offline = false;
+
+			const reqUrl = `https://www.youtube.com/oembed?format=json&url=${formattedUrl}`;
+
+			try {
+				const res = await axios.get(reqUrl);
+				foundVid = true;
+				thumbnail = `https://i.ytimg.com/vi/${id}/mqdefault.jpg`;
+				title = res.data.title;
+				console.log(res.data);
+			} catch (error) {
+				console.log(error);
+				if(!error.response.status){
+					// Network error
+					console.log('offline');
+
+					offline = true;
+				}
+			}
+
+			if(offline){
+				el.createEl('a', {text: source, href: source});
+				return;
+			}
+
+			if(!foundVid){
+				// el.createDiv({text: 'No video with that ID'}).addClass('thumbnail-error');
+				const msg = el.createDiv();
+				const component = new MarkdownRenderChild(msg);
+
+				MarkdownRenderer.renderMarkdown(
+					'>[!WARNING] No video with that ID',
+					msg,
+					sourcePath,
+					component
+					);
+				return;
+			}
+
+			el.createEl('img', {attr: {'src': thumbnail}}).addClass('thumbnail-img')
+			el.createDiv({text: title}).addClass('thumbnail-title')
+			// el.createEl('img', {attr: {'src': `https://img.youtube.com/vi/${id}/mqdefault.jpg`}})
 		});
+
+		await this.loadSettings();
 
 		// This adds a settings tab so the user can configure various aspects of the plugin
-		this.addSettingTab(new SampleSettingTab(this.app, this));
-
-		// If the plugin hooks up any global DOM events (on parts of the app that doesn't belong to this plugin)
-		// Using this function will automatically remove the event listener when this plugin is disabled.
-		this.registerDomEvent(document, 'click', (evt: MouseEvent) => {
-			console.log('click', evt);
-		});
-
-		// When registering intervals, this function will automatically clear the interval when the plugin is disabled.
-		this.registerInterval(window.setInterval(() => console.log('setInterval'), 5 * 60 * 1000));
+		this.addSettingTab(new ThumbySettingTab(this.app, this));
 	}
 
 	onunload() {
@@ -90,48 +127,41 @@ export default class MyPlugin extends Plugin {
 		await this.saveData(this.settings);
 	}
 }
+// class SampleSettingTab extends PluginSettingTab {
+// 	plugin: Thumby;
 
-class SampleModal extends Modal {
-	constructor(app: App) {
-		super(app);
-	}
+// 	constructor(app: App, plugin: Thumby) {
+// 		super(app, plugin);
+// 		this.plugin = plugin;
+// 	}
 
-	onOpen() {
-		const {contentEl} = this;
-		contentEl.setText('Woah!');
-	}
+// 	display(): void {
+// 		const {containerEl} = this;
 
-	onClose() {
-		const {contentEl} = this;
-		contentEl.empty();
-	}
-}
+// 		containerEl.empty();
 
-class SampleSettingTab extends PluginSettingTab {
-	plugin: MyPlugin;
+// 		containerEl.createEl('h2', {text: 'Settings for my awesome plugin.'});
 
-	constructor(app: App, plugin: MyPlugin) {
-		super(app, plugin);
-		this.plugin = plugin;
-	}
-
-	display(): void {
-		const {containerEl} = this;
-
-		containerEl.empty();
-
-		containerEl.createEl('h2', {text: 'Settings for my awesome plugin.'});
-
-		new Setting(containerEl)
-			.setName('Setting #1')
-			.setDesc('It\'s a secret')
-			.addText(text => text
-				.setPlaceholder('Enter your secret')
-				.setValue(this.plugin.settings.mySetting)
-				.onChange(async (value) => {
-					console.log('Secret: ' + value);
-					this.plugin.settings.mySetting = value;
-					await this.plugin.saveSettings();
-				}));
-	}
-}
+// 		new Setting(containerEl)
+// 			.setName('Setting #1')
+// 			.setDesc('It\'s a secret')
+// 			.addText(text => text
+// 				.setPlaceholder('Enter your secret')
+// 				.setValue(this.plugin.settings.mySetting)
+// 				.onChange(async (value) => {
+// 					console.log('Secret: ' + value);
+// 					this.plugin.settings.mySetting = value;
+// 					await this.plugin.saveSettings();
+// 				}));
+// 		new Setting(containerEl)
+// 			.setName('Download thumbnails')
+// 			.setDesc('Save thumbnails locally')
+// 			.addToggle(toggle => toggle
+// 				.setValue(this.plugin.settings.download)
+// 				.onChange(async (value) => {
+// 					console.log('Download: ' + value);
+// 					this.plugin.settings.download = value;
+// 					await this.plugin.saveSettings();
+// 				}));
+// 	}
+// }
