@@ -84,7 +84,7 @@ export default class Thumby extends Plugin {
 
 		this.addCommand({
 			id: "insert-thumbnail-from-clipboard",
-			name: "Insert thumbnail from link in clipboard",
+			name: "Insert thumbnail from URL in clipboard",
 			editorCallback: async (editor: Editor, view: MarkdownView) => {
 				const clipText = await navigator.clipboard.readText();
 				const id = this.getVideoId(clipText);

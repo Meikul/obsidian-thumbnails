@@ -3,7 +3,7 @@
 	"name": "Thumbnails",
 	"version": "1.0.0",
 	"minAppVersion": "0.14.0",
-	"description": "This plugin can insert youtube thumbnails and titles into your notes",
+	"description": "Insert youtube thumbnails into your notes",
 	"author": "Michael Harris",
 	"authorUrl": "https://github.com/meikul",
 	"isDesktopOnly": false

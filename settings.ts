@@ -14,15 +14,15 @@ export class ThumbySettingTab extends PluginSettingTab{
 
 		containerEl.empty();
 
-		new Setting(containerEl)
-			.setName('Download thumbnails')
-			.setDesc('Save thumbnail images locally')
-			.addToggle((toggle) => toggle
-				.setValue(this.plugin.settings.download)
-				.onChange(async (value) => {
-					console.log("new download settings")
-					this.plugin.settings.download = value;
-					await this.plugin.saveSettings();
-				}));
+		// new Setting(containerEl)
+		// 	.setName('Download thumbnails')
+		// 	.setDesc('Save thumbnail images locally')
+		// 	.addToggle((toggle) => toggle
+		// 		.setValue(this.plugin.settings.download)
+		// 		.onChange(async (value) => {
+		// 			console.log("new download settings")
+		// 			this.plugin.settings.download = value;
+		// 			await this.plugin.saveSettings();
+		// 		}));
 	}
 }
