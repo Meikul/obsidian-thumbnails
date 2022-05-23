@@ -74,7 +74,7 @@ export default class Thumby extends Plugin {
 
 
 				MarkdownRenderer.renderMarkdown(
-					`>[!WARNING] No video with that ID\nLink`,
+					`>[!WARNING] No video with that ID`,
 					msg,
 					sourcePath,
 					component
@@ -182,41 +182,3 @@ export default class Thumby extends Plugin {
 		await this.saveData(this.settings);
 	}
 }
-// class SampleSettingTab extends PluginSettingTab {
-// 	plugin: Thumby;
-
-// 	constructor(app: App, plugin: Thumby) {
-// 		super(app, plugin);
-// 		this.plugin = plugin;
-// 	}
-
-// 	display(): void {
-// 		const {containerEl} = this;
-
-// 		containerEl.empty();
-
-// 		containerEl.createEl('h2', {text: 'Settings for my awesome plugin.'});
-
-// 		new Setting(containerEl)
-// 			.setName('Setting #1')
-// 			.setDesc('It\'s a secret')
-// 			.addText(text => text
-// 				.setPlaceholder('Enter your secret')
-// 				.setValue(this.plugin.settings.mySetting)
-// 				.onChange(async (value) => {
-// 					console.log('Secret: ' + value);
-// 					this.plugin.settings.mySetting = value;
-// 					await this.plugin.saveSettings();
-// 				}));
-// 		new Setting(containerEl)
-// 			.setName('Download thumbnails')
-// 			.setDesc('Save thumbnails locally')
-// 			.addToggle(toggle => toggle
-// 				.setValue(this.plugin.settings.download)
-// 				.onChange(async (value) => {
-// 					console.log('Download: ' + value);
-// 					this.plugin.settings.download = value;
-// 					await this.plugin.saveSettings();
-// 				}));
-// 	}
-// }
