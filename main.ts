@@ -20,14 +20,13 @@ interface VidInfo {
 	networkError: boolean;
 }
 
-export default class Thumby extends Plugin {
+export default class ThumbyPlugin extends Plugin {
 	// settings: ThumbySettings;
 
 	async onload() {
 		// await this.loadSettings();
 
 		this.registerMarkdownCodeBlockProcessor('vid', async (source, el, ctx) => {
-			console.log('Vid block: ' + source);
 			const url = source.trim().split('\n')[0];
 			const id = this.getVideoId(url);
 
@@ -52,23 +51,17 @@ export default class Thumby extends Plugin {
 				return;
 			}
 
-			// https://www.youtube.com/watch?v=hCc0OsyMbQk
-			// https://youtu.be/hCc0OsyMbQk
-			// https://youtu.be/hCc0OsyMbQk?t=320
-
 			const info = await this.getVideoInfo(id);
 
 			if(info.networkError){
+				// If offline, just show link
 				el.createEl('a', {text: source, href: source});
 				return;
 			}
 
 			if(!info.foundVid){
-				// el.createDiv({text: 'No video with that ID'}).addClass('thumbnail-error');
 				const msg = el.createDiv();
 				const component = new MarkdownRenderChild(msg);
-				console.log(url);
-
 
 				MarkdownRenderer.renderMarkdown(
 					`>[!WARNING] No video with that ID`,
@@ -93,7 +86,7 @@ export default class Thumby extends Plugin {
 					return;
 				}
 				editor.getDoc().replaceSelection(`\`\`\`vid\n${clipText}\n\`\`\``);
-				console.log('Insert: ', id);
+				console.log('Insert video: ', id);
 			},
 		});
 
@@ -135,7 +128,6 @@ export default class Thumby extends Plugin {
 			author = res.data.author_name;
 			authorUrl = res.data.author_url;
 			foundVid = true;
-			console.log(res.data);
 		} catch (error) {
 			console.log(error);
 			if(!error.response.status){
