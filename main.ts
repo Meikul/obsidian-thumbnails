@@ -1,18 +1,15 @@
 // import https from 'https';
 import axios from 'axios';
-import { App, Editor, MarkdownRenderer, MarkdownRenderChild, Plugin, MarkdownView, Notice } from 'obsidian';
-import { text } from 'stream/consumers';
-import { ThumbySettingTab } from './settings';
+import { Editor, MarkdownRenderer, MarkdownRenderChild, Plugin, MarkdownView, Notice } from 'obsidian';
+// import { ThumbySettingTab } from './settings';
 
-interface ThumbySettings {
-	mySetting: string;
-	download: boolean;
-}
+// interface ThumbySettings {
+// 	download: boolean;
+// }
 
-const DEFAULT_SETTINGS: ThumbySettings = {
-	mySetting: 'default',
-	download: false
-}
+// const DEFAULT_SETTINGS: ThumbySettings = {
+// 	download: false
+// }
 
 interface VidInfo {
 	thumbnail: string;
@@ -24,10 +21,10 @@ interface VidInfo {
 }
 
 export default class Thumby extends Plugin {
-	settings: ThumbySettings;
+	// settings: ThumbySettings;
 
 	async onload() {
-		await this.loadSettings();
+		// await this.loadSettings();
 
 		this.registerMarkdownCodeBlockProcessor('vid', async (source, el, ctx) => {
 			console.log('Vid block: ' + source);
@@ -101,7 +98,7 @@ export default class Thumby extends Plugin {
 		});
 
 		// This adds a settings tab so the user can configure various aspects of the plugin
-		this.addSettingTab(new ThumbySettingTab(this.app, this));
+		// this.addSettingTab(new ThumbySettingTab(this.app, this));
 	}
 
 	onunload() {
@@ -174,11 +171,11 @@ export default class Thumby extends Plugin {
 		return id;
 	}
 
-	async loadSettings() {
-		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
-	}
+	// async loadSettings() {
+	// 	this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+	// }
 
-	async saveSettings() {
-		await this.saveData(this.settings);
-	}
+	// async saveSettings() {
+	// 	await this.saveData(this.settings);
+	// }
 }
