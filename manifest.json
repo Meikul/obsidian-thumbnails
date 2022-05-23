@@ -1,7 +1,7 @@
 {
 	"id": "obsidian-thumbnails",
 	"name": "Thumbnails",
-	"version": "1.1.0",
+	"version": "1.0.0",
 	"minAppVersion": "0.14.0",
 	"description": "This plugin can insert youtube thumbnails and titles into your notes",
 	"author": "Michael Harris",
