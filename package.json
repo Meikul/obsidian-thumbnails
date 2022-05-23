@@ -1,6 +1,6 @@
 {
 	"name": "obsidian-thumbnails",
-	"version": "1.0.2",
+	"version": "1.0.3",
 	"description": "This plugin can insert youtube thumbnails and titles into your notes",
 	"main": "main.js",
 	"scripts": {
