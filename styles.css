@@ -2,7 +2,6 @@
 .block-language-vid>a{
 	display: flex;
 	flex-direction: row;
-	/* font-size: 14px; */
 	color: var(--text-default);
 	text-decoration: none;
 	margin: 10px 0;
@@ -15,6 +14,7 @@
 	padding-top: 2px;
 	padding-left: 5px;
 	flex-grow: 1;
+	line-height: 1.3;
 	transition: background 0.3s;
 }
 
@@ -23,7 +23,7 @@
 } */
 
 .block-language-vid>a:hover .thumbnail-text{
-	background: rgba(0, 0, 0, 0.1);
+	background: var(--background-primary-alt);
 }
 
 .block-language-vid .thumbnail-title{
@@ -40,9 +40,16 @@
 .block-language-vid .thumbnail-author{
 	display: block;
 	color: var(--text-faint);
+	width: fit-content;
 	margin-top: 3px;
 	text-decoration: none;
+	transition: color 0.1s;
 }
+
+.block-language-vid .thumbnail-author:hover{
+	color: var(--text-muted);
+}
+
 
 .block-language-vid .thumbnail-error{
 	color: var(--text-error);
