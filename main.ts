@@ -55,7 +55,7 @@ export default class ThumbyPlugin extends Plugin {
 					new Notice('No video in clipboard');
 					return;
 				}
-				editor.getDoc().replaceSelection(`\`\`\`vid\n${clipText}\n\`\`\``);
+				editor.replaceSelection(`\`\`\`vid\n${clipText}\n\`\`\``);
 				console.log('Insert video: ', id);
 			},
 		});
@@ -85,12 +85,6 @@ export default class ThumbyPlugin extends Plugin {
 			networkError: false
 		};
 
-		let thumbnail = '';
-		let title = '';
-		let author = '';
-		let authorUrl = '';
-		let vidFound = false;
-		let networkError = false;
 		let reqUrl = '';
 		const videoId = this.getVideoId(url);
 		const isYoutube = url.includes('https://www.youtube.com/watch?v=') || url.includes('https://youtu.be/');
@@ -115,7 +109,6 @@ export default class ThumbyPlugin extends Plugin {
 			console.log(res);
 
 			if(res.status === 200){
-				// const res = await axios.get(reqUrl);
 				if(isYoutube){
 					// Doesn't use the returned thumbnail because it's usually letterboxed
 					info.thumbnail = `https://i.ytimg.com/vi/${videoId}/mqdefault.jpg`;
