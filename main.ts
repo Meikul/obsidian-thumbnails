@@ -6,16 +6,14 @@ interface VidInfo {
 	title: string;
 	author: string;
 	authorUrl: string;
-	foundVid: boolean;
+	vidFound: boolean;
 	networkError: boolean;
 }
 
 export default class ThumbyPlugin extends Plugin {
 	async onload() {
-
 		this.registerMarkdownCodeBlockProcessor('vid', async (source, el, ctx) => {
 			const url = source.trim().split('\n')[0];
-			const id = this.getVideoId(url);
 
 			const sourcePath =
 					typeof ctx == "string"
@@ -24,21 +22,7 @@ export default class ThumbyPlugin extends Plugin {
 							this.app.workspace.getActiveFile()?.path ??
 							"";
 
-			if(id === ''){
-				// const msg = el.createDiv({text: "Link has no video ID"}).addClass('thumbnail-error');
-				const msg = el.createDiv();
-				const component = new MarkdownRenderChild(msg);
-
-				MarkdownRenderer.renderMarkdown(
-					'>[!WARNING] URL has no video ID',
-					msg,
-					sourcePath,
-					component
-					);
-				return;
-			}
-
-			const info = await this.getVideoInfo(id);
+			const info = await this.getVideoInfo(url);
 
 			if(info.networkError){
 				// If offline, just show link
@@ -46,7 +30,7 @@ export default class ThumbyPlugin extends Plugin {
 				return;
 			}
 
-			if(!info.foundVid){
+			if(!info.vidFound){
 				const msg = el.createDiv();
 				const component = new MarkdownRenderChild(msg);
 
@@ -91,27 +75,38 @@ export default class ThumbyPlugin extends Plugin {
 		textBox.createEl('a', {text: info.author, href: info.authorUrl, title: info.author}).addClass('thumbnail-author');
 	}
 
-	async getVideoInfo(videoId: string): Promise<VidInfo>{
+	async getVideoInfo(url: string): Promise<VidInfo>{
 		let thumbnail = '';
 		let title = '';
 		let author = '';
 		let authorUrl = '';
-		let foundVid = false;
+		let vidFound = false;
 		let networkError = false;
-
-		const formattedUrl = `https://www.youtube.com/watch?v=${videoId}`;
+		let reqUrl = '';
+		const videoId = this.getVideoId(url);
+		const isYoutube = url.includes('https://www.youtube.com/watch?v=') || url.includes('https://youtu.be/');
 
 		// Use oEmbed to get data (https://oembed.com/)
-		const reqUrl = `https://www.youtube.com/oembed?format=json&url=${formattedUrl}`;
+		if(isYoutube){
+			reqUrl = `https://www.youtube.com/oembed?format=json&url=${url}`;
+		}
+		else if(url.includes('https://vimeo.com/')){
+			reqUrl = `https://vimeo.com/api/oembed.json?url=${url}`;
+		}
 
 		try {
 			const res = await axios.get(reqUrl);
-			// Doesn't use the returned thumbnail url because it sometimes has black bars
-			thumbnail = `https://i.ytimg.com/vi/${videoId}/mqdefault.jpg`;
+			if(isYoutube){
+				// Doesn't use the returned thumbnail because it's usually letterboxed
+				thumbnail = `https://i.ytimg.com/vi/${videoId}/mqdefault.jpg`;
+			}
+			else{
+				thumbnail = res.data.thumbnail_url;
+			}
 			title = res.data.title;
 			author = res.data.author_name;
 			authorUrl = res.data.author_url;
-			foundVid = true;
+			vidFound = true;
 		} catch (error) {
 			console.log(error);
 			if(!error.response.status){
@@ -125,20 +120,20 @@ export default class ThumbyPlugin extends Plugin {
 			title,
 			author,
 			authorUrl,
-			foundVid,
+			vidFound,
 			networkError
 		};
 	}
 
 	getVideoId(url: string): string{
 		let id = '';
-		if (url.contains('youtube.com/watch?v=')){
+		if (url.includes('https://www.youtube.com/watch?v=')){
 			const matches = url.match(/v=([-\w\d]+)/);
 			if(matches !== null){
 				id = matches[1]
 			}
 		}
-		else if (url.contains('https://youtu.be/')){
+		else if (url.includes('https://youtu.be/')){
 			const matches = url.match(/youtu.be\/([-\w\d]+)/);
 			if(matches !== null){
 				id = matches[1]
