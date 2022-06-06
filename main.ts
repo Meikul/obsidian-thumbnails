@@ -1,15 +1,5 @@
-// import https from 'https';
 import axios from 'axios';
 import { Editor, MarkdownRenderer, MarkdownRenderChild, Plugin, MarkdownView, Notice } from 'obsidian';
-// import { ThumbySettingTab } from './settings';
-
-// interface ThumbySettings {
-// 	download: boolean;
-// }
-
-// const DEFAULT_SETTINGS: ThumbySettings = {
-// 	download: false
-// }
 
 interface VidInfo {
 	thumbnail: string;
@@ -21,10 +11,7 @@ interface VidInfo {
 }
 
 export default class ThumbyPlugin extends Plugin {
-	// settings: ThumbySettings;
-
 	async onload() {
-		// await this.loadSettings();
 
 		this.registerMarkdownCodeBlockProcessor('vid', async (source, el, ctx) => {
 			const url = source.trim().split('\n')[0];
@@ -89,9 +76,6 @@ export default class ThumbyPlugin extends Plugin {
 				console.log('Insert video: ', id);
 			},
 		});
-
-		// This adds a settings tab so the user can configure various aspects of the plugin
-		// this.addSettingTab(new ThumbySettingTab(this.app, this));
 	}
 
 	onunload() {
@@ -162,12 +146,4 @@ export default class ThumbyPlugin extends Plugin {
 		}
 		return id;
 	}
-
-	// async loadSettings() {
-	// 	this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
-	// }
-
-	// async saveSettings() {
-	// 	await this.saveData(this.settings);
-	// }
 }
