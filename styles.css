@@ -1,5 +1,5 @@
 
-.block-language-vid>a{
+.block-language-vid>a.thumbnail{
 	display: flex;
 	flex-direction: row;
 	color: var(--text-default);
@@ -22,7 +22,7 @@
 	box-shadow: 0 .2rem .5rem var(--background-modifier-box-shadow);
 } */
 
-.block-language-vid>a:hover .thumbnail-text{
+.block-language-vid>a.thumbnail:hover .thumbnail-text{
 	background: var(--background-primary-alt);
 }
 

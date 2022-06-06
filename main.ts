@@ -1,5 +1,4 @@
-import axios from 'axios';
-import { Editor, MarkdownRenderer, MarkdownRenderChild, Plugin, MarkdownView, Notice } from 'obsidian';
+import { Editor, MarkdownRenderer, MarkdownRenderChild, Plugin, MarkdownView, Notice, requestUrl, RequestUrlParam } from 'obsidian';
 
 interface VidInfo {
 	thumbnail: string;
@@ -68,6 +67,7 @@ export default class ThumbyPlugin extends Plugin {
 
 	createThumbnail(el: HTMLElement, info: VidInfo, url: string){
 		const container = el.createEl('a', {href: url});
+		container.addClass('thumbnail');
 		container.createEl('img', {attr: {'src': info.thumbnail}}).addClass('thumbnail-img');
 		const textBox = container.createDiv();
 		textBox.addClass('thumbnail-text');
@@ -76,6 +76,15 @@ export default class ThumbyPlugin extends Plugin {
 	}
 
 	async getVideoInfo(url: string): Promise<VidInfo>{
+		const info: VidInfo = {
+			thumbnail: '',
+			title: '',
+			author: '',
+			authorUrl: '',
+			vidFound: false,
+			networkError: false
+		};
+
 		let thumbnail = '';
 		let title = '';
 		let author = '';
@@ -93,36 +102,39 @@ export default class ThumbyPlugin extends Plugin {
 		else if(url.includes('https://vimeo.com/')){
 			reqUrl = `https://vimeo.com/api/oembed.json?url=${url}`;
 		}
-
-		try {
-			const res = await axios.get(reqUrl);
-			if(isYoutube){
-				// Doesn't use the returned thumbnail because it's usually letterboxed
-				thumbnail = `https://i.ytimg.com/vi/${videoId}/mqdefault.jpg`;
-			}
-			else{
-				thumbnail = res.data.thumbnail_url;
-			}
-			title = res.data.title;
-			author = res.data.author_name;
-			authorUrl = res.data.author_url;
-			vidFound = true;
-		} catch (error) {
-			console.log(error);
-			if(!error.response.status){
-				// Network error
-				networkError = true;
-			}
+		else{
+			//vid not found
+			return info;
 		}
 
-		return {
-			thumbnail,
-			title,
-			author,
-			authorUrl,
-			vidFound,
-			networkError
-		};
+		try {
+			const reqParam: RequestUrlParam = {
+				url:reqUrl
+			};
+			const res = await requestUrl(reqParam);
+			console.log(res);
+
+			if(res.status === 200){
+				// const res = await axios.get(reqUrl);
+				if(isYoutube){
+					// Doesn't use the returned thumbnail because it's usually letterboxed
+					info.thumbnail = `https://i.ytimg.com/vi/${videoId}/mqdefault.jpg`;
+				}
+				else{
+					info.thumbnail = res.json.thumbnail_url;
+				}
+				info.title = res.json.title;
+				info.author = res.json.author_name;
+				info.authorUrl = res.json.author_url;
+				info.vidFound = true;
+			}
+		} catch (error) {
+			console.log(error);
+			// Network error
+			info.networkError = true;
+		}
+
+		return info;
 	}
 
 	getVideoId(url: string): string{
