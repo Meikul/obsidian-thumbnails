@@ -1,5 +1,7 @@
 # Obsidian Thumbnails
-This plugin lets you insert video thumbnails into your notes to help you keep track of what you're actually linking. It works with links from Youtube or Vimeo.
+This plugin lets you insert video thumbnails into your notes to help you keep track of what you're actually linking.
+
+Works with Youtube and Vimeo.
 ![](https://raw.githubusercontent.com/Meikul/obsidian-thumbnails/master/demo_images/block_demo.gif)
 
 ## Usage
