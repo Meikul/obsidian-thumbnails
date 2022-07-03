@@ -1,4 +1,5 @@
 import { Editor, MarkdownRenderer, MarkdownRenderChild, Plugin, MarkdownView, Notice, requestUrl, RequestUrlParam } from 'obsidian';
+import { ThumbySettingTab } from "./settings";
 
 interface VidInfo {
 	thumbnail: string;
@@ -9,8 +10,29 @@ interface VidInfo {
 	networkError: boolean;
 }
 
+interface ThumbySettings {
+	saveImages: boolean;
+}
+
+const DEFAULT_SETTINGS: Partial<ThumbySettings> = {
+	saveImages: false,
+};
+
 export default class ThumbyPlugin extends Plugin {
+	settings: ThumbySettings;
+
+	async loadSettings() {
+		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+	}
+
+	async saveSettings() {
+		await this.saveData(this.settings);
+	}
+
 	async onload() {
+		await this.loadSettings();
+		this.addSettingTab(new ThumbySettingTab(this.app, this));
+
 		this.registerMarkdownCodeBlockProcessor('vid', async (source, el, ctx) => {
 			const url = source.trim().split('\n')[0];
 
