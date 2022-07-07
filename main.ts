@@ -1,5 +1,5 @@
 import { Editor, MarkdownRenderer, MarkdownRenderChild, Plugin, MarkdownView, Notice, requestUrl, RequestUrlParam } from 'obsidian';
-import { ThumbySettingTab } from "./settings";
+import ThumbySettingTab from "./settings";
 
 interface VidInfo {
 	thumbnail: string;
@@ -12,6 +12,7 @@ interface VidInfo {
 
 interface ThumbySettings {
 	saveImages: boolean;
+	imageFolder: string;
 }
 
 const DEFAULT_SETTINGS: Partial<ThumbySettings> = {
@@ -32,6 +33,16 @@ export default class ThumbyPlugin extends Plugin {
 	async onload() {
 		await this.loadSettings();
 		this.addSettingTab(new ThumbySettingTab(this.app, this));
+
+		const p: RequestUrlParam = {
+			url: 'https://i.ytimg.com/vi/hCc0OsyMbQk/mqdefault.jpg'
+		}
+
+		const r = await requestUrl(p);
+		console.log(r);
+
+		const file = await this.app.vault.createBinary('james.jpg', r.arrayBuffer);
+		console.log(file);
 
 		this.registerMarkdownCodeBlockProcessor('vid', async (source, el, ctx) => {
 			const url = source.trim().split('\n')[0];
@@ -128,7 +139,7 @@ export default class ThumbyPlugin extends Plugin {
 				url:reqUrl
 			};
 			const res = await requestUrl(reqParam);
-			console.log(res);
+			// console.log(res);
 
 			if(res.status === 200){
 				if(isYoutube){
