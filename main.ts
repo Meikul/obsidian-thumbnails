@@ -2,6 +2,7 @@ import { Editor, MarkdownRenderer, MarkdownRenderChild, Plugin, MarkdownView, No
 import ThumbySettingTab from "./settings";
 
 interface VidInfo {
+	url: string;
 	thumbnail: string;
 	title: string;
 	author: string;
@@ -10,13 +11,20 @@ interface VidInfo {
 	networkError: boolean;
 }
 
+interface StoredInfo extends VidInfo {
+	infoStored: boolean;
+}
+
 interface ThumbySettings {
+	saveInfo: boolean;
 	saveImages: boolean;
+	imageLocation: string;
 	imageFolder: string;
 }
 
 const DEFAULT_SETTINGS: Partial<ThumbySettings> = {
-	saveImages: false,
+	saveInfo: false,
+	saveImages: true
 };
 
 export default class ThumbyPlugin extends Plugin {
@@ -34,18 +42,24 @@ export default class ThumbyPlugin extends Plugin {
 		await this.loadSettings();
 		this.addSettingTab(new ThumbySettingTab(this.app, this));
 
-		const p: RequestUrlParam = {
-			url: 'https://i.ytimg.com/vi/hCc0OsyMbQk/mqdefault.jpg'
-		}
+		// const p: RequestUrlParam = {
+		// 	url: 'https://i.ytimg.com/vi/hCc0OsyMbQk/mqdefault.jpg'
+		// }
 
-		const r = await requestUrl(p);
-		console.log(r);
+		// const r = await requestUrl(p);
+		// console.log(r);
 
-		const file = await this.app.vault.createBinary('james.jpg', r.arrayBuffer);
-		console.log(file);
+		// const file = await this.app.vault.createBinary('james.jpg', r.arrayBuffer);
+		// console.log(file);
 
 		this.registerMarkdownCodeBlockProcessor('vid', async (source, el, ctx) => {
 			const url = source.trim().split('\n')[0];
+
+			if(this.settings.saveInfo){
+				const storedInfo = this.parseStoredInfo(source);
+				console.log(storedInfo);
+
+			}
 
 			const sourcePath =
 					typeof ctx == "string"
@@ -98,8 +112,8 @@ export default class ThumbyPlugin extends Plugin {
 
 	}
 
-	createThumbnail(el: HTMLElement, info: VidInfo, url: string){
-		const container = el.createEl('a', {href: url});
+	createThumbnail(el: HTMLElement, info: VidInfo){
+		const container = el.createEl('a', {href: info.url});
 		container.addClass('thumbnail');
 		container.createEl('img', {attr: {'src': info.thumbnail}}).addClass('thumbnail-img');
 		const textBox = container.createDiv();
@@ -108,8 +122,51 @@ export default class ThumbyPlugin extends Plugin {
 		textBox.createEl('a', {text: info.author, href: info.authorUrl, title: info.author}).addClass('thumbnail-author');
 	}
 
+	parseStoredInfo(source: string): StoredInfo{
+		const info: StoredInfo = {
+			url: '',
+			thumbnail: '',
+			title: '',
+			author: '',
+			authorUrl: '',
+			vidFound: false,
+			networkError: false,
+			infoStored: false
+		};
+
+		const input = source.trim().split('\n');
+		if(input.length !== 5){
+			console.log('Failed Parse');
+
+			return info;
+		}
+
+		for (const [i, line] of input.entries()){
+			if(i !== 0){
+				const sepIndex = line.indexOf(': ');
+				if(sepIndex === -1){
+					console.log('No colon');
+					return info;
+				}
+				const d = line.substring(sepIndex+2);
+				input[i] = d;
+			}
+		}
+
+		info.url = input[0];
+		info.title = input[1];
+		info.author = input[2];
+		info.thumbnail = input[3];
+		info.authorUrl = input[4];
+		info.infoStored = true;
+
+
+		return info;
+	}
+
 	async getVideoInfo(url: string): Promise<VidInfo>{
 		const info: VidInfo = {
+			url: url,
 			thumbnail: '',
 			title: '',
 			author: '',

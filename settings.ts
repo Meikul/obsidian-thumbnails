@@ -15,33 +15,54 @@ export default class ThumbySettingTab extends PluginSettingTab {
 		containerEl.empty();
 		containerEl.createEl('h2', { text: 'Thumbnails Settings' });
 
+		// @ts-ignore
 		console.log(this.app.vault.getConfig('attachmentFolderPath'));
 
+		// Store data locally (off)
+		// - Save images (on)
+		//   - Image location (attachment/vault/specified)
+		//     - Folder path
 
 		new Setting(containerEl)
-			.setName('Save Images')
-			.setDesc('Save thumbnail images locally in vault')
+			.setName('Save Thumbnail Info')
+			.setDesc('Save thumbnail information inside your note, so they work offline')
 			.addToggle((toggle) =>
 				toggle
-					.setValue(this.plugin.settings.saveImages)
+					.setValue(this.plugin.settings.saveInfo)
 					.onChange(async (value) => {
-						this.plugin.settings.saveImages = value;
+						this.plugin.settings.saveInfo = value;
 						this.display();
 						await this.plugin.saveSettings();
 					})
 			);
 
-    if(this.plugin.settings.saveImages){
-		new Setting(containerEl)
-			.setName('Image Folder')
-			.setDesc('Where thumbnail images should be saved')
-			.addText((text) =>
-				text
-					.setPlaceholder('ex. Files')
-					.onChange(async (value) => {
-						this.plugin.settings.imageFolder = value;
-					})
-			);
-	}
+		if(this.plugin.settings.saveInfo){
+			new Setting(containerEl)
+				.setName('Save Images')
+				.setDesc('Save thumbnail images locally in vault')
+				.addToggle((toggle) =>
+					toggle
+						.setValue(this.plugin.settings.saveImages)
+						.onChange(async (value) => {
+							this.plugin.settings.saveImages = value;
+							this.display();
+							await this.plugin.saveSettings();
+						})
+				);
+
+			if(this.plugin.settings.saveImages){
+				new Setting(containerEl)
+					.setName('Image Folder')
+					.setDesc('Where thumbnail images should be saved')
+					.addText((text) =>
+						text
+							.setPlaceholder('ex. Files')
+							.onChange(async (value) => {
+								this.plugin.settings.imageFolder = value;
+							})
+					);
+			}
+		}
+
 	}
 }
