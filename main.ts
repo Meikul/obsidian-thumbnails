@@ -87,13 +87,14 @@ export default class ThumbyPlugin extends Plugin {
 
 		let reqUrl = '';
 		const videoId = this.getVideoId(url);
-		const isYoutube = url.includes('https://www.youtube.com/watch?v=') || url.includes('https://youtu.be/');
+		const isYoutube = url.includes('https://www.youtube.com/watch?v=') || url.includes('https://youtu.be/') || url.includes('https://www.youtube.com/shorts/');
+		const isVimeo = url.includes('https://vimeo.com/')
 
 		// Use oEmbed to get data (https://oembed.com/)
 		if(isYoutube){
 			reqUrl = `https://www.youtube.com/oembed?format=json&url=${url}`;
 		}
-		else if(url.includes('https://vimeo.com/')){
+		else if(isVimeo){
 			reqUrl = `https://vimeo.com/api/oembed.json?url=${url}`;
 		}
 		else{
@@ -110,7 +111,7 @@ export default class ThumbyPlugin extends Plugin {
 
 			if(res.status === 200){
 				if(isYoutube){
-					// Doesn't use the returned thumbnail because it's usually letterboxed
+					// Returned thumbnail is usually letterboxed or wrong aspect ratio
 					info.thumbnail = `https://i.ytimg.com/vi/${videoId}/mqdefault.jpg`;
 				}
 				else{
@@ -140,6 +141,18 @@ export default class ThumbyPlugin extends Plugin {
 		}
 		else if (url.includes('https://youtu.be/')){
 			const matches = url.match(/youtu.be\/([-\w\d]+)/);
+			if(matches !== null){
+				id = matches[1]
+			}
+		}
+		else if(url.includes('https://www.youtube.com/shorts/')){
+			const matches = url.match(/shorts\/([-\w\d]+)/);
+			if(matches !== null){
+				id = matches[1]
+			}
+		}
+		else if (url.includes('https://vimeo.com/')){
+			const matches = url.match(/vimeo.com\/([-\w\d]+)/);
 			if(matches !== null){
 				id = matches[1]
 			}
