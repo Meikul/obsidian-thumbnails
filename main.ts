@@ -1,4 +1,4 @@
-import { Editor, MarkdownRenderer, MarkdownRenderChild, Plugin, MarkdownView, Notice, requestUrl, RequestUrlParam } from 'obsidian';
+import { Editor, MarkdownRenderer, MarkdownRenderChild, Plugin, MarkdownView, Notice, requestUrl, RequestUrlParam, MarkdownPostProcessorContext, EditorPosition } from 'obsidian';
 import ThumbySettingTab from "./settings";
 
 interface VidInfo {
@@ -9,21 +9,18 @@ interface VidInfo {
 	authorUrl: string;
 	vidFound: boolean;
 	networkError: boolean;
-}
-
-interface StoredInfo extends VidInfo {
 	infoStored: boolean;
 }
 
 interface ThumbySettings {
-	saveInfo: boolean;
+	storeInfo: boolean;
 	saveImages: boolean;
 	imageLocation: string;
 	imageFolder: string;
 }
 
 const DEFAULT_SETTINGS: Partial<ThumbySettings> = {
-	saveInfo: false,
+	storeInfo: false,
 	saveImages: true
 };
 
@@ -54,11 +51,26 @@ export default class ThumbyPlugin extends Plugin {
 
 		this.registerMarkdownCodeBlockProcessor('vid', async (source, el, ctx) => {
 			const url = source.trim().split('\n')[0];
+			let info: VidInfo;
 
-			if(this.settings.saveInfo){
-				const storedInfo = this.parseStoredInfo(source);
-				console.log(storedInfo);
+			console.log(ctx.getSectionInfo(el));
 
+
+			if(this.settings.storeInfo){
+				info = this.parseStoredInfo(source);
+				console.log(info);
+			}
+
+			if(!this.settings.storeInfo || !info.infoStored){
+				console.log('fetching info');
+
+				info = await this.getVideoInfo(url);
+			}
+
+			if(info.networkError){
+				// If offline, just show link
+				el.createEl('a', {text: source, href: source});
+				return;
 			}
 
 			const sourcePath =
@@ -68,28 +80,26 @@ export default class ThumbyPlugin extends Plugin {
 							this.app.workspace.getActiveFile()?.path ??
 							"";
 
-			const info = await this.getVideoInfo(url);
-
-			if(info.networkError){
-				// If offline, just show link
-				el.createEl('a', {text: source, href: source});
-				return;
-			}
-
 			if(!info.vidFound){
-				const msg = el.createDiv();
-				const component = new MarkdownRenderChild(msg);
+				const component = new MarkdownRenderChild(el);
 
 				MarkdownRenderer.renderMarkdown(
-					`>[!WARNING] No video with that ID`,
-					msg,
+					`>[!WARNING] Cannot find video\n>${info.url}`,
+					el,
 					sourcePath,
 					component
 					);
 				return;
 			}
 
-			this.createThumbnail(el, info, url);
+
+			// Sketchy? Can get be called infinitely if contents from this.storeVideoInfo
+			// doesn't make this.paraseStoredInfo set info.infoStored to true
+			if(this.settings.storeInfo && !info.infoStored){
+				this.storeVideoInfo(info, el, ctx);
+			}
+
+			this.createThumbnail(el, info);
 		});
 
 		this.addCommand({
@@ -99,7 +109,7 @@ export default class ThumbyPlugin extends Plugin {
 				const clipText = await navigator.clipboard.readText();
 				const id = this.getVideoId(clipText);
 				if(id === ''){
-					new Notice('No video in clipboard');
+					new Notice('No valid video in clipboard');
 					return;
 				}
 				editor.replaceSelection(`\`\`\`vid\n${clipText}\n\`\`\``);
@@ -122,8 +132,8 @@ export default class ThumbyPlugin extends Plugin {
 		textBox.createEl('a', {text: info.author, href: info.authorUrl, title: info.author}).addClass('thumbnail-author');
 	}
 
-	parseStoredInfo(source: string): StoredInfo{
-		const info: StoredInfo = {
+	parseStoredInfo(source: string): VidInfo{
+		const info: VidInfo = {
 			url: '',
 			thumbnail: '',
 			title: '',
@@ -159,9 +169,41 @@ export default class ThumbyPlugin extends Plugin {
 		info.thumbnail = input[3];
 		info.authorUrl = input[4];
 		info.infoStored = true;
+		info.vidFound = true;
 
 
 		return info;
+	}
+
+	storeVideoInfo(info: VidInfo, el: HTMLElement, ctx: MarkdownPostProcessorContext){
+		const section = ctx.getSectionInfo(el);
+
+		console.log('storing');
+
+
+		if(!section){
+			return;
+		}
+
+		const content = `\`\`\`vid\n${info.url}\nTitle: ${info.title}\nAuthor: ${info.author}\nThumbnailUrl: ${info.thumbnail}\nAuthorUrl: ${info.authorUrl}\n\`\`\``;
+		console.log(content);
+
+
+		const view = this.app.workspace.getActiveViewOfType(MarkdownView);
+		if(view){
+			const startPos: EditorPosition = {
+				line: section.lineStart,
+				ch: 0
+			};
+
+			const endPos: EditorPosition = {
+				line: section.lineEnd,
+				ch: view.editor.getLine(section.lineEnd).length
+			}
+
+			console.log(view.editor.getRange(startPos, endPos));
+			view.editor.replaceRange(content, startPos, endPos);
+		}
 	}
 
 	async getVideoInfo(url: string): Promise<VidInfo>{
@@ -172,7 +214,8 @@ export default class ThumbyPlugin extends Plugin {
 			author: '',
 			authorUrl: '',
 			vidFound: false,
-			networkError: false
+			networkError: false,
+			infoStored: false
 		};
 
 		let reqUrl = '';

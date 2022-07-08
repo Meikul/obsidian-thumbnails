@@ -28,15 +28,15 @@ export default class ThumbySettingTab extends PluginSettingTab {
 			.setDesc('Save thumbnail information inside your note, so they work offline')
 			.addToggle((toggle) =>
 				toggle
-					.setValue(this.plugin.settings.saveInfo)
+					.setValue(this.plugin.settings.storeInfo)
 					.onChange(async (value) => {
-						this.plugin.settings.saveInfo = value;
+						this.plugin.settings.storeInfo = value;
 						this.display();
 						await this.plugin.saveSettings();
 					})
 			);
 
-		if(this.plugin.settings.saveInfo){
+		if(this.plugin.settings.storeInfo){
 			new Setting(containerEl)
 				.setName('Save Images')
 				.setDesc('Save thumbnail images locally in vault')
