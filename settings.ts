@@ -15,8 +15,11 @@ export default class ThumbySettingTab extends PluginSettingTab {
 		containerEl.empty();
 		containerEl.createEl('h2', { text: 'Thumbnails Settings' });
 
-		// @ts-ignore
-		console.log(this.app.vault.getConfig('attachmentFolderPath'));
+		console.log(this.plugin.settings);
+
+		//@ts-ignore
+		const attachmentLocation = this.app.vault.getConfig('attachmentFolderPath');
+
 
 		// Store data locally (off)
 		// - Save images (on)
@@ -31,8 +34,8 @@ export default class ThumbySettingTab extends PluginSettingTab {
 					.setValue(this.plugin.settings.storeInfo)
 					.onChange(async (value) => {
 						this.plugin.settings.storeInfo = value;
-						this.display();
 						await this.plugin.saveSettings();
+						this.display();
 					})
 			);
 
@@ -45,22 +48,51 @@ export default class ThumbySettingTab extends PluginSettingTab {
 						.setValue(this.plugin.settings.saveImages)
 						.onChange(async (value) => {
 							this.plugin.settings.saveImages = value;
-							this.display();
 							await this.plugin.saveSettings();
+							this.display();
 						})
 				);
-
 			if(this.plugin.settings.saveImages){
 				new Setting(containerEl)
-					.setName('Image Folder')
+					.setName('Image Location')
 					.setDesc('Where thumbnail images should be saved')
-					.addText((text) =>
-						text
-							.setPlaceholder('ex. Files')
+					.addDropdown((dropdown) =>
+						dropdown
+							.addOption('defaultAttachment', 'Default attachment location')
+							.addOption('specifiedFolder', 'In the folder specified below')
+							.setValue(this.plugin.settings.imageLocation)
 							.onChange(async (value) => {
-								this.plugin.settings.imageFolder = value;
+								this.plugin.settings.imageLocation = value;
+								this.display();
+								await this.plugin.saveSettings();
 							})
 					);
+				if (this.plugin.settings.imageLocation === 'defaultAttachment'){
+					new Setting(containerEl)
+						.setName('Default attachment location')
+						// .setDesc('"Default location for new attachments" set in "Files & Links" options')
+						.setDesc('Options > Files & Links > Default location for new attachments')
+						.addText((text) =>
+							text
+								.setValue(attachmentLocation)
+								.setDisabled(true)
+						)
+						.setClass('default-attachment-info')
+				}
+				else if (this.plugin.settings.imageLocation === 'specifiedFolder') {
+					new Setting(containerEl)
+						.setName('Image Folder')
+						.setDesc('The folder where thumbnail images should be saved')
+						.addText((text) =>
+							text
+								.setPlaceholder('ex: Files/Thumbnails')
+								.setValue(this.plugin.settings.imageFolder)
+								.onChange(async (value) => {
+									this.plugin.settings.imageFolder = value;
+									await this.plugin.saveSettings();
+								})
+						);
+				}
 			}
 		}
 

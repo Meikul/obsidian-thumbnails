@@ -21,7 +21,9 @@ interface ThumbySettings {
 
 const DEFAULT_SETTINGS: Partial<ThumbySettings> = {
 	storeInfo: false,
-	saveImages: true
+	saveImages: false,
+	imageLocation: 'defaultAttachment',
+	imageFolder: ''
 };
 
 export default class ThumbyPlugin extends Plugin {
@@ -53,12 +55,14 @@ export default class ThumbyPlugin extends Plugin {
 			const url = source.trim().split('\n')[0];
 			let info: VidInfo;
 
-			console.log(ctx.getSectionInfo(el));
+			// console.log(ctx.getSectionInfo(el));
+
+			//@ts-ignore
+			console.log(this.app.vault.getConfig('attachmentFolderPath'));
 
 
 			if(this.settings.storeInfo){
 				info = this.parseStoredInfo(source);
-				console.log(info);
 			}
 
 			if(!this.settings.storeInfo || !info.infoStored){
