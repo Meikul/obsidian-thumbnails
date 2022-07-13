@@ -20,7 +20,6 @@ export default class ThumbySettingTab extends PluginSettingTab {
 		//@ts-ignore
 		const attachmentLocation = this.app.vault.getConfig('attachmentFolderPath');
 
-
 		// Store data locally (off)
 		// - Save images (on)
 		//   - Image location (attachment/vault/specified)
@@ -95,6 +94,5 @@ export default class ThumbySettingTab extends PluginSettingTab {
 				}
 			}
 		}
-
 	}
 }
