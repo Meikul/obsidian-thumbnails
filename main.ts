@@ -1,4 +1,4 @@
-import { Editor, MarkdownRenderer, MarkdownRenderChild, Plugin, MarkdownView, Notice, requestUrl, RequestUrlParam, MarkdownPostProcessorContext, EditorPosition, TFile } from 'obsidian';
+import { Editor, MarkdownRenderer, MarkdownRenderChild, Plugin, MarkdownView, Notice, requestUrl, RequestUrlParam, MarkdownPostProcessorContext, EditorPosition } from 'obsidian';
 import ThumbySettingTab from "./settings";
 
 interface VidInfo {
@@ -185,7 +185,7 @@ export default class ThumbyPlugin extends Plugin {
 
 		if(this.settings.saveImages && !info.imageSaved){
 			info.thumbnail = await this.saveImage(info);
-      		console.log(info.thumbnail);
+			console.log(info.thumbnail);
 			// const path = await this.saveImage(info);
 			// console.log(path);
 		}
@@ -224,7 +224,7 @@ export default class ThumbyPlugin extends Plugin {
 		if(existingFile){
 			// file exists
 			console.log(`File Exists: ${filePath}`);
-      console.log(this.app.vault.getResourcePath(existingFile));
+			//@ts-ignore
 			return this.app.vault.getResourcePath(existingFile);
       // return info.thumbnail;
 		}
