@@ -67,7 +67,8 @@ export default class ThumbyPlugin extends Plugin {
 
 			if(info.networkError && !info.infoStored){
 				// If offline, just show link
-				el.createEl('a', {text: source, href: source});
+				const url = source.trim().split('\n')[0];
+				el.createEl('a', {text: url, href: url});
 				return;
 			}
 
