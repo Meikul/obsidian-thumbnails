@@ -1,4 +1,5 @@
-import { Editor, MarkdownRenderer, MarkdownRenderChild, Plugin, MarkdownView, Notice, requestUrl, RequestUrlParam, MarkdownPostProcessorContext, EditorPosition } from 'obsidian';
+import { Editor, MarkdownRenderer, MarkdownRenderChild, Plugin, MarkdownView, Notice, requestUrl, RequestUrlParam, MarkdownPostProcessorContext, EditorPosition, TAbstractFile, TFile } from 'obsidian';
+import { listeners } from 'process';
 import ThumbySettingTab from "./settings";
 
 interface VidInfo {
@@ -51,7 +52,8 @@ export default class ThumbyPlugin extends Plugin {
 		// const file = await this.app.vault.createBinary('james.jpg', r.arrayBuffer);
 
 		this.registerMarkdownCodeBlockProcessor('vid', async (source, el, ctx) => {
-			const url = source.trim().split('\n')[0];
+      const sourceLines = source.trim().split('\n');
+			const url = sourceLines[0];
 			let info: VidInfo;
 
 			//@ts-ignore
@@ -65,8 +67,10 @@ export default class ThumbyPlugin extends Plugin {
 				info = await this.getVideoInfo(url);
 			}
 
+      console.log(sourceLines.length);
+
 			if(info.networkError && !info.infoStored){
-				// If offline, just show link
+				// If offline and info not stored, just show link
 				const url = source.trim().split('\n')[0];
 				el.createEl('a', {text: url, href: url});
 				return;
@@ -97,6 +101,10 @@ export default class ThumbyPlugin extends Plugin {
 			if(this.settings.storeInfo && !info.infoStored){
 				this.storeVideoInfo(info, el, ctx);
 			}
+
+      if(!this.settings.storeInfo && sourceLines.length > 1){
+        this.removeStoredInfo(info, el, ctx);
+      }
 
 			this.createThumbnail(el, info);
 		});
@@ -145,8 +153,6 @@ export default class ThumbyPlugin extends Plugin {
 
 		const input = source.trim().split('\n');
 		if(input.length !== 5){
-			console.log('Failed Parse');
-
 			return info;
 		}
 
@@ -154,7 +160,6 @@ export default class ThumbyPlugin extends Plugin {
 			if(i !== 0){
 				const sepIndex = line.indexOf(': ');
 				if(sepIndex === -1){
-					console.log('No colon');
 					return info;
 				}
 				const d = line.substring(sepIndex+2);
@@ -167,12 +172,29 @@ export default class ThumbyPlugin extends Plugin {
 		info.author = input[2];
 		info.thumbnail = input[3];
 		info.authorUrl = input[4];
-		info.infoStored = true;
 		info.vidFound = true;
 
 		if(info.thumbnail.indexOf('app://local') === 0){
-			info.imageSaved = true;
+      //@ts-ignore
+      const startPos = this.app.vault.adapter.basePath.length + 12;
+      const localPath = info.thumbnail.substring(startPos);
+
+      const existingFile = this.app.vault.getAbstractFileByPath(localPath);
+      console.log(`File Check: ${existingFile}`);
+
+      if(existingFile){
+        info.imageSaved = true;
+      }
+
+      if(!this.settings.saveImages){
+        return info;
+      }
 		}
+    else if (this.settings.saveImages){
+      return info;
+    }
+
+		info.infoStored = true;
 
 		return info;
 	}
@@ -187,8 +209,6 @@ export default class ThumbyPlugin extends Plugin {
 		if(this.settings.saveImages && !info.imageSaved){
 			info.thumbnail = await this.saveImage(info);
 			console.log(info.thumbnail);
-			// const path = await this.saveImage(info);
-			// console.log(path);
 		}
 
 		const content = `\`\`\`vid\n${info.url}\nTitle: ${info.title}\nAuthor: ${info.author}\nThumbnailUrl: ${info.thumbnail}\nAuthorUrl: ${info.authorUrl}\n\`\`\``;
@@ -207,7 +227,7 @@ export default class ThumbyPlugin extends Plugin {
 
 			view.editor.replaceRange(content, startPos, endPos);
 		}
-	}
+  }
 
 	async saveImage(info: VidInfo): Promise<string>{
 		const id = await this.getVideoId(info.url);
@@ -225,9 +245,7 @@ export default class ThumbyPlugin extends Plugin {
 		if(existingFile){
 			// file exists
 			console.log(`File Exists: ${filePath}`);
-			//@ts-ignore
-			return this.app.vault.getResourcePath(existingFile);
-      // return info.thumbnail;
+			return this.getTrimmedResourcePath(existingFile);
 		}
 
 		const reqParam: RequestUrlParam = {
@@ -247,9 +265,41 @@ export default class ThumbyPlugin extends Plugin {
 			return info.thumbnail;
 		}
 
-		const localUrl = this.app.vault.getResourcePath(file);
+		const localUrl = this.getTrimmedResourcePath(file);
 		return localUrl;
 	}
+
+  getTrimmedResourcePath(file: TAbstractFile): string{
+    //@ts-ignore
+    const path = this.app.vault.getResourcePath(file);
+    const endPos = path.indexOf('.jpg') + 4;
+    return path.substring(0, endPos);
+  }
+
+  removeStoredInfo(info: VidInfo, el: HTMLElement, ctx: MarkdownPostProcessorContext){
+    const section = ctx.getSectionInfo(el);
+
+		if(!section){
+			return;
+		}
+
+		const content = `\`\`\`vid\n${info.url}\n\`\`\``;
+
+		const view = this.app.workspace.getActiveViewOfType(MarkdownView);
+		if(view){
+			const startPos: EditorPosition = {
+				line: section.lineStart,
+				ch: 0
+			};
+
+			const endPos: EditorPosition = {
+				line: section.lineEnd,
+				ch: view.editor.getLine(section.lineEnd).length
+			}
+
+			view.editor.replaceRange(content, startPos, endPos);
+		}
+  }
 
 	async getVideoInfo(url: string): Promise<VidInfo>{
 		const info: VidInfo = {
