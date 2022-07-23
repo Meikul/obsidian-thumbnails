@@ -43,21 +43,10 @@ export default class ThumbyPlugin extends Plugin {
 		await this.loadSettings();
 		this.addSettingTab(new ThumbySettingTab(this.app, this));
 
-		// const p: RequestUrlParam = {
-		// 	url: 'https://i.ytimg.com/vi/hCc0OsyMbQk/mqdefault.jpg'
-		// }
-
-		// const r = await requestUrl(p);
-
-		// const file = await this.app.vault.createBinary('james.jpg', r.arrayBuffer);
-
 		this.registerMarkdownCodeBlockProcessor('vid', async (source, el, ctx) => {
       const sourceLines = source.trim().split('\n');
 			const url = sourceLines[0];
 			let info: VidInfo;
-
-			//@ts-ignore
-			// console.log(this.app.vault.getConfig('attachmentFolderPath'));
 
 			if(this.settings.storeInfo){
 				info = this.parseStoredInfo(source);
