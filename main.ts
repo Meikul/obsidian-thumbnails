@@ -1,5 +1,4 @@
 import { Editor, MarkdownRenderer, MarkdownRenderChild, Plugin, MarkdownView, Notice, requestUrl, RequestUrlParam, MarkdownPostProcessorContext, EditorPosition, TAbstractFile, TFile } from 'obsidian';
-import { listeners } from 'process';
 import ThumbySettingTab from "./settings";
 
 interface VidInfo {
