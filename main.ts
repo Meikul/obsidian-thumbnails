@@ -73,6 +73,28 @@ export default class ThumbyPlugin extends Plugin {
 		textBox.addClass('thumbnail-text');
 		textBox.createDiv({text: info.title, title: info.title}).addClass('thumbnail-title');
 		textBox.createEl('a', {text: info.author, href: info.authorUrl, title: info.author}).addClass('thumbnail-author');
+		this.getTimestamp(url);
+	}
+
+	getTimestamp(url: string): number{
+		let tIndex = url.indexOf('?t=');
+		if(tIndex === -1){
+			tIndex = url.indexOf('&t=');
+		}
+		if(tIndex === -1){
+			tIndex = url.indexOf('#t=');
+		}
+		if(tIndex === -1){
+			return 0;
+		}
+
+		const search = (/[?&#]t=(?:(\d+)h)*(?:(\d+)m)*(?:(\d+)s)*(\d+)*/).exec(url);
+		console.log(search);
+		//1-h 2-m 3-s 4-s
+
+
+
+		return 0;
 	}
 
 	async getVideoInfo(url: string): Promise<VidInfo>{
@@ -107,7 +129,6 @@ export default class ThumbyPlugin extends Plugin {
 				url:reqUrl
 			};
 			const res = await requestUrl(reqParam);
-			console.log(res);
 
 			if(res.status === 200){
 				if(isYoutube){
