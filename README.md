@@ -17,3 +17,9 @@ Should work with any video url format, including links with timecodes.
 ## Commands
 ### Insert thumbnail from URL in clipboard
 If you have a video URL in your clipboard, this command will create the code block for you.
+## Offline Options
+If you're offline, the thumbnails will just appear like a normal link.
+### Save Thumbnail Info
+If you want your thumbnails to work offline, you can enable `Save Thumbnail Info` in the settings tab. The image will be blank, but it will show the title and channel like normal.
+### Save Images
+If you also want to store the images locally, you can enable `Save Images` in the settings tab.
