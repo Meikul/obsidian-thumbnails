@@ -56,8 +56,6 @@ export default class ThumbyPlugin extends Plugin {
 				info = await this.getVideoInfo(url);
 			}
 
-      console.log(sourceLines.length);
-
 			if(info.networkError && !info.infoStored){
 				// If offline and info not stored, just show link
 				const url = source.trim().split('\n')[0];
@@ -169,7 +167,6 @@ export default class ThumbyPlugin extends Plugin {
       const localPath = info.thumbnail.substring(startPos);
 
       const existingFile = this.app.vault.getAbstractFileByPath(localPath);
-      console.log(`File Check: ${existingFile}`);
 
       if(existingFile){
         info.imageSaved = true;
@@ -197,7 +194,6 @@ export default class ThumbyPlugin extends Plugin {
 
 		if(this.settings.saveImages && !info.imageSaved){
 			info.thumbnail = await this.saveImage(info);
-			console.log(info.thumbnail);
 		}
 
 		const content = `\`\`\`vid\n${info.url}\nTitle: ${info.title}\nAuthor: ${info.author}\nThumbnailUrl: ${info.thumbnail}\nAuthorUrl: ${info.authorUrl}\n\`\`\``;
@@ -233,7 +229,6 @@ export default class ThumbyPlugin extends Plugin {
 
 		if(existingFile){
 			// file exists
-			console.log(`File Exists: ${filePath}`);
 			return this.getTrimmedResourcePath(existingFile);
 		}
 
@@ -246,7 +241,6 @@ export default class ThumbyPlugin extends Plugin {
 		try {
 			const req = await requestUrl(reqParam);
 
-			console.log(req);
 			if(req.status === 200){
 				file = await this.app.vault.createBinary(filePath, req.arrayBuffer);
 			}
@@ -324,7 +318,6 @@ export default class ThumbyPlugin extends Plugin {
 				url:reqUrl
 			};
 			const res = await requestUrl(reqParam);
-			console.log(res);
 
 			if(res.status === 200){
 				if(isYoutube){
@@ -341,7 +334,7 @@ export default class ThumbyPlugin extends Plugin {
 				info.vidFound = true;
 			}
 		} catch (error) {
-			console.log(error);
+			console.error(error);
 			// Network error
 			info.networkError = true;
 		}
@@ -395,7 +388,7 @@ export default class ThumbyPlugin extends Plugin {
 				id = res.json.video_id.toString();
 			}
 		} catch (error) {
-			console.log(error);
+			console.error(error);
 		}
 		return id;
 	}
