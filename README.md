@@ -1,5 +1,5 @@
 ![version badge](https://img.shields.io/github/v/release/Meikul/obsidian-thumbnails)
-![downloads badge](https://img.shields.io/github/downloads/Meikul/obsidian-thumbnails/total.svg)
+<!--![downloads badge](https://img.shields.io/github/downloads/Meikul/obsidian-thumbnails/total.svg)-->
 # Obsidian Thumbnails
 This plugin lets you insert video thumbnails into your notes to help you keep track of what you're actually linking.
 
