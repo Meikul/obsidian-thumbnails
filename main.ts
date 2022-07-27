@@ -43,33 +43,33 @@ export default class ThumbyPlugin extends Plugin {
 		this.addSettingTab(new ThumbySettingTab(this.app, this));
 
 		this.registerMarkdownCodeBlockProcessor('vid', async (source, el, ctx) => {
-      const sourceLines = source.trim().split('\n');
+			const sourceLines = source.trim().split('\n');
 			const url = sourceLines[0];
 			let info: VidInfo;
 
-			if(this.settings.storeInfo){
+			if (this.settings.storeInfo) {
 				info = this.parseStoredInfo(source);
 			}
 
-			if(!this.settings.storeInfo || !info.infoStored){
+			if (!this.settings.storeInfo || !info.infoStored) {
 				info = await this.getVideoInfo(url);
 			}
 
-			if(info.networkError && !info.infoStored){
+			if (info.networkError && !info.infoStored) {
 				// If offline and info not stored, just show link
 				const url = source.trim().split('\n')[0];
-				el.createEl('a', {text: url, href: url});
+				el.createEl('a', { text: url, href: url });
 				return;
 			}
 
 			const sourcePath =
-					typeof ctx == "string"
-						? ctx
-						: ctx?.sourcePath ??
-							this.app.workspace.getActiveFile()?.path ??
-							"";
+				typeof ctx == "string"
+					? ctx
+					: ctx?.sourcePath ??
+					this.app.workspace.getActiveFile()?.path ??
+					"";
 
-			if(!info.vidFound){
+			if (!info.vidFound) {
 				const component = new MarkdownRenderChild(el);
 
 				MarkdownRenderer.renderMarkdown(
@@ -77,20 +77,20 @@ export default class ThumbyPlugin extends Plugin {
 					el,
 					sourcePath,
 					component
-					);
+				);
 				return;
 			}
 
 
 			// Sketchy? Can get be called infinitely if contents from this.storeVideoInfo
 			// doesn't make this.parseStoredInfo set info.infoStored to true
-			if(this.settings.storeInfo && !info.infoStored){
+			if (this.settings.storeInfo && !info.infoStored) {
 				this.storeVideoInfo(info, el, ctx);
 			}
 
-      if(!this.settings.storeInfo && sourceLines.length > 1){
-        this.removeStoredInfo(info, el, ctx);
-      }
+			if (!this.settings.storeInfo && sourceLines.length > 1) {
+				this.removeStoredInfo(info, el, ctx);
+			}
 
 			this.createThumbnail(el, info);
 		});
@@ -101,7 +101,7 @@ export default class ThumbyPlugin extends Plugin {
 			editorCallback: async (editor: Editor, view: MarkdownView) => {
 				const clipText = await navigator.clipboard.readText();
 				const id = await this.getVideoId(clipText);
-				if(id === ''){
+				if (id === '') {
 					new Notice('No valid video in clipboard');
 					return;
 				}
@@ -114,17 +114,28 @@ export default class ThumbyPlugin extends Plugin {
 
 	}
 
-	createThumbnail(el: HTMLElement, info: VidInfo){
-		const container = el.createEl('a', {href: info.url});
+	createThumbnail(el: HTMLElement, info: VidInfo) {
+		let thumbnailUrl = info.thumbnail;
+		if(this.pathIsLocal(thumbnailUrl)){
+			const file = this.app.vault.getAbstractFileByPath(thumbnailUrl);
+			//@ts-ignore
+			thumbnailUrl = this.app.vault.getResourcePath(file);
+		}
+
+		const container = el.createEl('a', { href: info.url });
 		container.addClass('thumbnail');
-		container.createEl('img', {attr: {'src': info.thumbnail}}).addClass('thumbnail-img');
+		container.createEl('img', { attr: { 'src': thumbnailUrl } }).addClass('thumbnail-img');
 		const textBox = container.createDiv();
 		textBox.addClass('thumbnail-text');
-		textBox.createDiv({text: info.title, title: info.title}).addClass('thumbnail-title');
-		textBox.createEl('a', {text: info.author, href: info.authorUrl, title: info.author}).addClass('thumbnail-author');
+		textBox.createDiv({ text: info.title, title: info.title }).addClass('thumbnail-title');
+		textBox.createEl('a', { text: info.author, href: info.authorUrl, title: info.author }).addClass('thumbnail-author');
 	}
 
-	parseStoredInfo(source: string): VidInfo{
+	pathIsLocal(path: string): boolean{
+		return path.indexOf('https://') !== 0;
+	}
+
+	parseStoredInfo(source: string): VidInfo {
 		const info: VidInfo = {
 			url: '',
 			thumbnail: '',
@@ -138,17 +149,17 @@ export default class ThumbyPlugin extends Plugin {
 		};
 
 		const input = source.trim().split('\n');
-		if(input.length !== 5){
+		if (input.length !== 5) {
 			return info;
 		}
 
-		for (const [i, line] of input.entries()){
-			if(i !== 0){
+		for (const [i, line] of input.entries()) {
+			if (i !== 0) {
 				const sepIndex = line.indexOf(': ');
-				if(sepIndex === -1){
+				if (sepIndex === -1) {
 					return info;
 				}
-				const d = line.substring(sepIndex+2);
+				const d = line.substring(sepIndex + 2);
 				input[i] = d;
 			}
 		}
@@ -160,45 +171,42 @@ export default class ThumbyPlugin extends Plugin {
 		info.authorUrl = input[4];
 		info.vidFound = true;
 
-		if(info.thumbnail.indexOf('app://local') === 0){
-      //@ts-ignore
-      const startPos = this.app.vault.adapter.basePath.length + 12;
-      const localPath = info.thumbnail.substring(startPos);
+		if (this.pathIsLocal(info.thumbnail)) {
+			// Check file exists
+			const existingFile = this.app.vault.getAbstractFileByPath(info.thumbnail);
 
-      const existingFile = this.app.vault.getAbstractFileByPath(localPath);
+			if (existingFile) {
+				info.imageSaved = true;
+			}
 
-      if(existingFile){
-        info.imageSaved = true;
-      }
-
-      if(!this.settings.saveImages){
-        return info;
-      }
+			if (!this.settings.saveImages) {
+				return info;
+			}
 		}
-    else if (this.settings.saveImages){
-      return info;
-    }
+		else if (this.settings.saveImages) {
+			return info;
+		}
 
 		info.infoStored = true;
 
 		return info;
 	}
 
-	async storeVideoInfo(info: VidInfo, el: HTMLElement, ctx: MarkdownPostProcessorContext){
+	async storeVideoInfo(info: VidInfo, el: HTMLElement, ctx: MarkdownPostProcessorContext) {
 		const section = ctx.getSectionInfo(el);
 
-		if(!section){
+		if (!section) {
 			return;
 		}
 
-		if(this.settings.saveImages && !info.imageSaved){
+		if (this.settings.saveImages && !info.imageSaved) {
 			info.thumbnail = await this.saveImage(info);
 		}
 
 		const content = `\`\`\`vid\n${info.url}\nTitle: ${info.title}\nAuthor: ${info.author}\nThumbnailUrl: ${info.thumbnail}\nAuthorUrl: ${info.authorUrl}\n\`\`\``;
 
 		const view = this.app.workspace.getActiveViewOfType(MarkdownView);
-		if(view){
+		if (view) {
 			const startPos: EditorPosition = {
 				line: section.lineStart,
 				ch: 0
@@ -211,64 +219,66 @@ export default class ThumbyPlugin extends Plugin {
 
 			view.editor.replaceRange(content, startPos, endPos);
 		}
-  }
+	}
 
-	async saveImage(info: VidInfo): Promise<string>{
+	async saveImage(info: VidInfo): Promise<string> {
 		const id = await this.getVideoId(info.url);
-    let filePath = '';
-    if(this.settings.imageLocation === 'specifiedFolder'){
-      filePath = `${this.settings.imageFolder}/${id}.jpg`;
-    }
-    else{
-      //@ts-ignore
-      filePath = `${this.app.vault.getConfig('attachmentFolderPath')}/${id}.jpg`;
-    }
+		let filePath = '';
+		if (this.settings.imageLocation === 'specifiedFolder') {
+			filePath = `${this.settings.imageFolder}/${id}.jpg`;
+		}
+		else {
+			//@ts-ignore
+			filePath = `${this.app.vault.getConfig('attachmentFolderPath')}/${id}.jpg`;
+		}
 
 		const existingFile = this.app.vault.getAbstractFileByPath(filePath);
 
-		if(existingFile){
+		if (existingFile) {
 			// file exists
-			return this.getTrimmedResourcePath(existingFile);
+			return existingFile.path;
 		}
 
 		const reqParam: RequestUrlParam = {
 			url: info.thumbnail
 		}
 
-    let file;
+		let file;
 
 		try {
 			const req = await requestUrl(reqParam);
 
-			if(req.status === 200){
+			if (req.status === 200) {
 				file = await this.app.vault.createBinary(filePath, req.arrayBuffer);
 			}
 		} catch (error) {
 			return info.thumbnail;
 		}
 
-		const localUrl = this.getTrimmedResourcePath(file);
+		console.log(`Path ${file.path}`);
+
+		const localUrl = file.path;
 		return localUrl;
 	}
 
-  getTrimmedResourcePath(file: TAbstractFile): string{
-    //@ts-ignore
-    const path = this.app.vault.getResourcePath(file);
-    const endPos = path.indexOf('.jpg') + 4;
-    return path.substring(0, endPos);
-  }
+	getTrimmedResourcePath(file: TAbstractFile): string {
+		//@ts-ignore
+		const path = this.app.vault.getResourcePath(file);
+		const endPos = path.indexOf('.jpg') + 4;
+		return path.substring(0, endPos);
+	}
 
-  removeStoredInfo(info: VidInfo, el: HTMLElement, ctx: MarkdownPostProcessorContext){
-    const section = ctx.getSectionInfo(el);
+	removeStoredInfo(info: VidInfo, el: HTMLElement, ctx: MarkdownPostProcessorContext) {
+		const section = ctx.getSectionInfo(el);
 
-		if(!section){
+		if (!section) {
 			return;
 		}
 
 		const content = `\`\`\`vid\n${info.url}\n\`\`\``;
 
 		const view = this.app.workspace.getActiveViewOfType(MarkdownView);
-		if(view){
+		if (view) {
 			const startPos: EditorPosition = {
 				line: section.lineStart,
 				ch: 0
@@ -281,9 +291,9 @@ export default class ThumbyPlugin extends Plugin {
 
 			view.editor.replaceRange(content, startPos, endPos);
 		}
-  }
+	}
 
-	async getVideoInfo(url: string): Promise<VidInfo>{
+	async getVideoInfo(url: string): Promise<VidInfo> {
 		const info: VidInfo = {
 			url: url,
 			thumbnail: '',
@@ -301,30 +311,30 @@ export default class ThumbyPlugin extends Plugin {
 		const isVimeo = url.includes('https://vimeo.com/')
 
 		// Use oEmbed to get data (https://oembed.com/)
-		if(isYoutube){
+		if (isYoutube) {
 			reqUrl = `https://www.youtube.com/oembed?format=json&url=${url}`;
 		}
-		else if(isVimeo){
+		else if (isVimeo) {
 			reqUrl = `https://vimeo.com/api/oembed.json?url=${url}`;
 		}
-		else{
+		else {
 			//vid not found
 			return info;
 		}
 
 		try {
 			const reqParam: RequestUrlParam = {
-				url:reqUrl
+				url: reqUrl
 			};
 			const res = await requestUrl(reqParam);
 
-			if(res.status === 200){
-				if(isYoutube){
+			if (res.status === 200) {
+				if (isYoutube) {
 					// Returned thumbnail is usually letterboxed or wrong aspect ratio
 					const videoId = await this.getVideoId(url);
 					info.thumbnail = `https://i.ytimg.com/vi/${videoId}/mqdefault.jpg`;
 				}
-				else{
+				else {
 					info.thumbnail = res.json.thumbnail_url;
 				}
 				info.title = res.json.title;
@@ -341,31 +351,31 @@ export default class ThumbyPlugin extends Plugin {
 		return info;
 	}
 
-	async getVideoId(url: string): Promise<string>{
+	async getVideoId(url: string): Promise<string> {
 		let id = '';
-		if (url.includes('https://www.youtube.com/watch?v=')){
+		if (url.includes('https://www.youtube.com/watch?v=')) {
 			const matches = url.match(/v=([-\w\d]+)/);
-			if(matches !== null){
+			if (matches !== null) {
 				id = matches[1]
 			}
 		}
-		else if (url.includes('https://youtu.be/')){
+		else if (url.includes('https://youtu.be/')) {
 			const matches = url.match(/youtu.be\/([-\w\d]+)/);
-			if(matches !== null){
+			if (matches !== null) {
 				id = matches[1]
 			}
 		}
-		else if(url.includes('https://www.youtube.com/shorts/')){
+		else if (url.includes('https://www.youtube.com/shorts/')) {
 			const matches = url.match(/shorts\/([-\w\d]+)/);
-			if(matches !== null){
+			if (matches !== null) {
 				id = matches[1]
 			}
 		}
-		else if (url.includes('https://vimeo.com/')){
+		else if (url.includes('https://vimeo.com/')) {
 			const matches = url.match(/vimeo.com\/([\w\d]+)/);
-			if(matches !== null){
+			if (matches !== null) {
 				id = matches[1]
-				if(!(/^[0-9]+$/).exec(id)){
+				if (!(/^[0-9]+$/).exec(id)) {
 					// Special vimeo url's that don't contain a video id
 					id = await this.fetchVimeoVideoId(url);
 				}
@@ -374,7 +384,7 @@ export default class ThumbyPlugin extends Plugin {
 		return id;
 	}
 
-	async fetchVimeoVideoId(url: string): Promise<string>{
+	async fetchVimeoVideoId(url: string): Promise<string> {
 		let id = '';
 		try {
 			const reqParam: RequestUrlParam = {
@@ -383,7 +393,7 @@ export default class ThumbyPlugin extends Plugin {
 
 			const res = await requestUrl(reqParam);
 
-			if(res.status === 200 && res.json.video_id){
+			if (res.status === 200 && res.json.video_id) {
 				id = res.json.video_id.toString();
 			}
 		} catch (error) {
