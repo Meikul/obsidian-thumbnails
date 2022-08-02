@@ -305,9 +305,8 @@ export default class ThumbyPlugin extends Plugin {
 			infoStored: false,
 			imageSaved: false
 		};
-
 		let reqUrl = '';
-		const isYoutube = url.includes('https://www.youtube.com/watch?v=') || url.includes('https://youtu.be/') || url.includes('https://www.youtube.com/shorts/');
+		const isYoutube = url.includes('https://www.youtube.com/watch?v=') || url.includes('https://youtu.be/') || url.includes('youtube.com/shorts/');
 		const isVimeo = url.includes('https://vimeo.com/')
 
 		// Use oEmbed to get data (https://oembed.com/)
@@ -365,7 +364,7 @@ export default class ThumbyPlugin extends Plugin {
 				id = matches[1]
 			}
 		}
-		else if (url.includes('https://www.youtube.com/shorts/')) {
+		else if (url.includes('youtube.com/shorts/')) {
 			const matches = url.match(/shorts\/([-\w\d]+)/);
 			if (matches !== null) {
 				id = matches[1]
