@@ -128,7 +128,7 @@ export default class ThumbyPlugin extends Plugin {
 
 	hasManyUrls(lines: string[]): boolean{
 		// Will be used for future features
-		return (lines.length > 1 && lines.every(e => (/^https*:\/\/\S*$/).test(e.trim())))
+		return (lines.length > 1 && lines.every(e => (/^((https*:\/\/)|(www\.))+\S*$/).test(e.trim())))
 	}
 
 	createThumbnail(el: HTMLElement, info: VidInfo) {
