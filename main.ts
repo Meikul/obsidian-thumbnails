@@ -81,8 +81,20 @@ export default class ThumbyPlugin extends Plugin {
 				return;
 			}
 
+			if (this.hasManyUrls(sourceLines)){
+				const component = new MarkdownRenderChild(el);
 
-			// Sketchy? Can get be called infinitely if contents from this.storeVideoInfo
+				MarkdownRenderer.renderMarkdown(
+					`>[!WARNING] Cannot accept multiple URLs yet`,
+					el,
+					sourcePath,
+					component
+				);
+				return;
+			}
+
+
+			// Sketchy? Can get be called infinitely if output from this.storeVideoInfo
 			// doesn't make this.parseStoredInfo set info.infoStored to true
 			if (this.settings.storeInfo && !info.infoStored) {
 				this.storeVideoInfo(info, el, ctx);
@@ -112,6 +124,11 @@ export default class ThumbyPlugin extends Plugin {
 
 	onunload() {
 
+	}
+
+	hasManyUrls(lines: string[]): boolean{
+		// Will be used for future features
+		return (lines.length > 1 && lines.every(e => (/^https*:\/\/\S*$/).test(e.trim())))
 	}
 
 	createThumbnail(el: HTMLElement, info: VidInfo) {
