@@ -39,6 +39,16 @@
 
 .block-language-vid .thumbnail-img{
 	width: 150px;
+	position: relative;
+}
+
+.block-language-vid .thumbnail-img::after{
+	content: "";
+	display: block;
+	position: relative;
+	width: 150px;
+	height: 84.375px;
+	background: var(--background-secondary);
 }
 
 .block-language-vid .thumbnail-author{
@@ -58,4 +68,17 @@
 
 .block-language-vid .thumbnail-error{
 	color: var(--text-error);
+}
+
+.mod-settings .setting-item.default-attachment-info{
+	border: none;
+	padding-top: 0;
+}
+
+.mod-settings .setting-item.default-attachment-info input{
+	color: var(--text-muted);
+}
+
+.mod-settings .setting-item.default-attachment-info .setting-item-description{
+	font-style: italic;
 }
