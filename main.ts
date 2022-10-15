@@ -141,15 +141,17 @@ export default class ThumbyPlugin extends Plugin {
 
 		const container = el.createEl('a', { href: info.url });
 		container.addClass('thumbnail');
-		container.createEl('img', { attr: { 'src': thumbnailUrl } }).addClass('thumbnail-img');
+		const imgContainer = container.createDiv();
+		imgContainer.addClass('img-container');
+		imgContainer.createEl('img', { attr: { 'src': thumbnailUrl } }).addClass('thumbnail-img');
 		const textBox = container.createDiv();
 		textBox.addClass('thumbnail-text');
 		textBox.createDiv({text: info.title, title: info.title}).addClass('thumbnail-title');
 		textBox.createEl('a', {text: info.author, href: info.authorUrl, title: info.author}).addClass('thumbnail-author');
-		this.getTimestamp(url);
+		this.getTimestamp(info.url);
 	}
 
-	getTimestamp(url: string): number{
+	getTimestamp(url: string): string {
 		let tIndex = url.indexOf('?t=');
 		if(tIndex === -1){
 			tIndex = url.indexOf('&t=');
@@ -158,16 +160,31 @@ export default class ThumbyPlugin extends Plugin {
 			tIndex = url.indexOf('#t=');
 		}
 		if(tIndex === -1){
-			return 0;
+			return '';
 		}
 
 		const search = (/[?&#]t=(?:(\d+)h)*(?:(\d+)m)*(?:(\d+)s)*(\d+)*/).exec(url);
-		console.log(search);
-		//1-h 2-m 3-s 4-s
+		search.shift();
+		const times = search.map((v) => parseInt(v) || 0);
+		//0-h 1-m 2-s 3-s
 
+		const seconds = times.pop();
+		if(seconds){
+			times[2] = seconds % 60;
+			times[1] = Math.floor(seconds / 60);
+			times[0] = Math.floor(seconds / 3600);
+		}
+		const secStr = String(times[2]).padStart(2, '0');
+		let minStr = String(times[1]);
+		const hrStr = String(times[0]);
 
+		let timeStr = `${minStr}:${secStr}`;
+		if(times[0]){
+			minStr = minStr.padStart(2, '0');
+			timeStr = `${hrStr}:${minStr}:${secStr}`;
+		}
 
-		return 0;
+		return timeStr;
 	}
 
 	pathIsLocal(path: string): boolean{
