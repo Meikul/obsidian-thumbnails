@@ -141,14 +141,16 @@ export default class ThumbyPlugin extends Plugin {
 
 		const container = el.createEl('a', { href: info.url });
 		container.addClass('thumbnail');
-		const imgContainer = container.createDiv();
-		imgContainer.addClass('img-container');
-		imgContainer.createEl('img', { attr: { 'src': thumbnailUrl } }).addClass('thumbnail-img');
+		container.createEl('img', { attr: { 'src': thumbnailUrl } }).addClass('thumbnail-img');
 		const textBox = container.createDiv();
 		textBox.addClass('thumbnail-text');
 		textBox.createDiv({text: info.title, title: info.title}).addClass('thumbnail-title');
 		textBox.createEl('a', {text: info.author, href: info.authorUrl, title: info.author}).addClass('thumbnail-author');
-		this.getTimestamp(info.url);
+
+		const timestamp = this.getTimestamp(info.url);
+		if(timestamp !== ''){
+			container.createDiv({text: timestamp}).addClass('timestamp');
+		}
 	}
 
 	getTimestamp(url: string): string {
@@ -166,12 +168,18 @@ export default class ThumbyPlugin extends Plugin {
 		const search = (/[?&#]t=(?:(\d+)h)*(?:(\d+)m)*(?:(\d+)s)*(\d+)*/).exec(url);
 		search.shift();
 		const times = search.map((v) => parseInt(v) || 0);
-		//0-h 1-m 2-s 3-s
+		//0-h 1-m 2-s 3-s(seconds only format)
 
-		const seconds = times.pop();
+		let seconds = times.pop();
+
+		if(times[2] > 59){
+			// Vimeo seconds only format still includes an "s"
+			// so it ends up in times[2] instead of times[3]
+			seconds = times[2];
+		}
 		if(seconds){
 			times[2] = seconds % 60;
-			times[1] = Math.floor(seconds / 60);
+			times[1] = Math.floor(seconds / 60) % 60;
 			times[0] = Math.floor(seconds / 3600);
 		}
 		const secStr = String(times[2]).padStart(2, '0');
