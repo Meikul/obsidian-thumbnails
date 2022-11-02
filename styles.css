@@ -1,3 +1,6 @@
+.block-language-vid{
+	position: relative;
+}
 
 .block-language-vid>a.thumbnail{
 	display: flex;
@@ -47,8 +50,8 @@
 	font-size: calc(var(--font-text-size) - 5px);
 	display: block;
 	position: absolute;
-	bottom: 7px;
-	left: 7px;
+	bottom: 4px;
+	left: 4px;
 	padding: 0 5px 0 5px;
 	background: rgba(0, 0, 0, 0.75);
 }
