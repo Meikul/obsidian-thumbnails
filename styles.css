@@ -13,10 +13,6 @@
 	box-shadow: none;
 }
 
-.cm-preview-code-block .block-language-vid>a.thumbnail{
-	margin: 0;
-}
-
 .block-language-vid .thumbnail-text{
 	padding: 0 8px;
 	flex-grow: 1;
