@@ -17,9 +17,6 @@ export default class ThumbySettingTab extends PluginSettingTab {
 
 		console.log(this.plugin.settings);
 
-		//@ts-ignore
-		const attachmentLocation = this.app.vault.getConfig('attachmentFolderPath');
-
 		// Store data locally (default: off)
 		// - Save images (default: on)
 		//   - Image location (default: attachment_location/specified_folder)
@@ -68,6 +65,8 @@ export default class ThumbySettingTab extends PluginSettingTab {
 							})
 					);
 				if (this.plugin.settings.imageLocation === 'defaultAttachment'){
+					//@ts-ignore
+					const attachmentLocation = this.app.vault.getConfig('attachmentFolderPath');
 					new Setting(containerEl)
 						.setName('Default attachment location')
 						.setDesc('Options > Files & Links > Default location for new attachments')

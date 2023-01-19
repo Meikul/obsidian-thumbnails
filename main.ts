@@ -286,17 +286,42 @@ export default class ThumbyPlugin extends Plugin {
 	}
 
 	async saveImage(info: VidInfo): Promise<string> {
+		// Save image and return path, or url if save failed
+
+		// TODO
+		// - getAvailablePathForAttachment gives indexed file locations when file exists, exisiting file check misses relative paths
 		const id = await this.getVideoId(info.url);
 		let filePath = '';
+		console.log('save image');
+
+    const currentNote = this.app.workspace.getActiveFile();
+    // console.log(currentNote.parent.path);
+
+
+
 		if (this.settings.imageLocation === 'specifiedFolder') {
 			filePath = `${this.settings.imageFolder}/${id}.jpg`;
 		}
 		else {
 			//@ts-ignore
-			filePath = `${this.app.vault.getConfig('attachmentFolderPath')}/${id}.jpg`;
+			// let attachmentPath = this.app.vault.getConfig('attachmentFolderPath');
+			// if(attachmentPath.substring(attachmentPath.length - 1) === '/'){
+			// 	attachmentPath = attachmentPath.substring(0, attachmentPath.length - 1);
+			// }
+			// filePath = `${attachmentPath}/${id}.jpg`;
+      //@ts-ignore
+      filePath = await this.app.vault.getAvailablePathForAttachments(id, 'jpg', currentNote);
+
+			console.log('default location');
 		}
 
+    console.log(`filePath: ${filePath}`);
+
+
 		const existingFile = this.app.vault.getAbstractFileByPath(filePath);
+		// this check isn't catching relative subfolder paths
+
+    console.log(`existingFile: ${existingFile}`);
 
 		if (existingFile) {
 			// file exists
@@ -307,15 +332,20 @@ export default class ThumbyPlugin extends Plugin {
 			url: info.thumbnail
 		}
 
+
+
 		let file;
 
 		try {
 			const req = await requestUrl(reqParam);
+			//relative path is relative to where js is executing, not relative to note file
+			// get current file, reconcile relative path
 
 			if (req.status === 200) {
 				file = await this.app.vault.createBinary(filePath, req.arrayBuffer);
 			}
 		} catch (error) {
+      // just return thumbnail url
 			return info.thumbnail;
 		}
 
