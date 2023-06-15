@@ -290,38 +290,46 @@ export default class ThumbyPlugin extends Plugin {
 
 		// TODO
 		// - getAvailablePathForAttachment gives indexed file locations when file exists, exisiting file check misses relative paths
+		// - Make relative paths work for "specified folder" setting
+		//   - As is relative paths in `filePath` turn out relative to vault root
 		const id = await this.getVideoId(info.url);
 		let filePath = '';
 		console.log('save image');
 
-    const currentNote = this.app.workspace.getActiveFile();
-    // console.log(currentNote.parent.path);
-
-
+		const currentNote = this.app.workspace.getActiveFile();
 
 		if (this.settings.imageLocation === 'specifiedFolder') {
+
 			filePath = `${this.settings.imageFolder}/${id}.jpg`;
 		}
 		else {
 			//@ts-ignore
-			// let attachmentPath = this.app.vault.getConfig('attachmentFolderPath');
-			// if(attachmentPath.substring(attachmentPath.length - 1) === '/'){
-			// 	attachmentPath = attachmentPath.substring(0, attachmentPath.length - 1);
-			// }
+			let attachmentPath = this.app.vault.getConfig('attachmentFolderPath');
+			// If last character is '/', trim it
+			if(attachmentPath.substring(attachmentPath.length - 1) === '/'){
+				attachmentPath = attachmentPath.substring(0, attachmentPath.length - 1);
+			}
 			// filePath = `${attachmentPath}/${id}.jpg`;
-      //@ts-ignore
-      filePath = await this.app.vault.getAvailablePathForAttachments(id, 'jpg', currentNote);
+			console.log(attachmentPath);
+			const resolved = path.resolve(currentNote.path, attachmentPath);
+			console.log(resolved);
+
+			console.log(currentNote);
+
+			//@ts-ignore
+			filePath = await this.app.vault.getAvailablePathForAttachments(id, 'jpg', currentNote);
+			// method source: https://forum.obsidian.md/t/api-get-the-directory-of-the-default-location-for-new-attachments-setting/36847/2
 
 			console.log('default location');
 		}
 
-    console.log(`filePath: ${filePath}`);
+		console.log(`filePath: ${filePath}`);
 
 
 		const existingFile = this.app.vault.getAbstractFileByPath(filePath);
 		// this check isn't catching relative subfolder paths
 
-    console.log(`existingFile: ${existingFile}`);
+		console.log(`existingFile: ${existingFile}`);
 
 		if (existingFile) {
 			// file exists
@@ -338,14 +346,15 @@ export default class ThumbyPlugin extends Plugin {
 
 		try {
 			const req = await requestUrl(reqParam);
-			//relative path is relative to where js is executing, not relative to note file
-			// get current file, reconcile relative path
 
 			if (req.status === 200) {
+				// Relative paths in `filePath` turn out relative to vault root
 				file = await this.app.vault.createBinary(filePath, req.arrayBuffer);
 			}
 		} catch (error) {
-      // just return thumbnail url
+      		// If error when saving, just return thumbnail url
+			console.log(error);
+
 			return info.thumbnail;
 		}
 
