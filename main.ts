@@ -425,6 +425,13 @@ export default class ThumbyPlugin extends Plugin {
 			const res = await requestUrl(reqParam);
 
 			if (res.status === 200) {
+				info.title = res.json.title;
+				info.author = res.json.author_name;
+				info.authorUrl = res.json.author_url;
+				info.vidFound = true;
+			}
+
+			if (info.vidFound) {
 				if (isYoutube) {
 					// Returned thumbnail is usually letterboxed or wrong aspect ratio
 					const videoId = await this.getVideoId(url);
@@ -433,10 +440,6 @@ export default class ThumbyPlugin extends Plugin {
 				else {
 					info.thumbnail = res.json.thumbnail_url;
 				}
-				info.title = res.json.title;
-				info.author = res.json.author_name;
-				info.authorUrl = res.json.author_url;
-				info.vidFound = true;
 			}
 		} catch (error) {
 			console.error(error);
