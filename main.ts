@@ -419,7 +419,8 @@ export default class ThumbyPlugin extends Plugin {
 
 		try {
 			const reqParam: RequestUrlParam = {
-				url: reqUrl
+				url: reqUrl,
+				throw: false
 			};
 			const res = await requestUrl(reqParam);
 
