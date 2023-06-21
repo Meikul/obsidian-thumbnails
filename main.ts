@@ -18,13 +18,15 @@ interface ThumbySettings {
 	saveImages: boolean;
 	imageLocation: string;
 	imageFolder: string;
+	youtubeApiKey: string;
 }
 
 const DEFAULT_SETTINGS: Partial<ThumbySettings> = {
 	storeInfo: false,
 	saveImages: false,
 	imageLocation: 'defaultAttachment',
-	imageFolder: ''
+	imageFolder: '',
+	youtubeApiKey: ''
 };
 
 export default class ThumbyPlugin extends Plugin {
