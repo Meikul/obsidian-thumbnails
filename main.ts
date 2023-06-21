@@ -430,6 +430,22 @@ export default class ThumbyPlugin extends Plugin {
 				info.authorUrl = res.json.author_url;
 				info.vidFound = true;
 			}
+			else if(this.settings.youtubeApiKey) {
+				const videoId = await this.getVideoId(url);
+				const youtubeUrl = `https://youtube.googleapis.com/youtube/v3/videos?part=snippet&id=${videoId}&key=${this.settings.youtubeApiKey}`;
+				const youtubeReqParam: RequestUrlParam = {
+					url: youtubeUrl,
+					throw: false
+				};
+				const youtubeApiRes = await requestUrl(youtubeReqParam);
+				
+				if (youtubeApiRes.status === 200) {
+					const snippet = youtubeApiRes.json.items[0].snippet;
+					info.title = snippet.title;
+					info.author = snippet.channelTitle;
+					info.vidFound = true;
+				}
+			}
 
 			if (info.vidFound) {
 				if (isYoutube) {
