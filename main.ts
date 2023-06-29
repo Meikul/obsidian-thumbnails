@@ -311,8 +311,8 @@ export default class ThumbyPlugin extends Plugin {
 			}
 			// filePath = `${attachmentPath}/${id}.jpg`;
 			console.log(attachmentPath);
-			const resolved = path.resolve(currentNote.path, attachmentPath);
-			console.log(resolved);
+
+			console.log(this.app.vault.adapter);
 
 			console.log(currentNote);
 
