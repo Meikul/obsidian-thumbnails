@@ -91,18 +91,24 @@ export default class ThumbySettingTab extends PluginSettingTab {
 								})
 						);
 				}
-				new Setting(containerEl)
-					.setName('YouTube API Key')
-					.setDesc('The API Key for the YouTube Data API')
-					.addText((text) =>
-						text
-							.setValue(this.plugin.settings.youtubeApiKey)
-							.onChange(async (value) => {
-								this.plugin.settings.youtubeApiKey = value;
-								await this.plugin.saveSettings();
-							})
-					);
 			}
 		}
+		new Setting(containerEl)
+			.setName('YouTube API Key (optional)')
+			.setDesc('The API Key for the YouTube Data API')
+			.addExtraButton((btn) =>
+				btn
+					.setIcon('info')
+					.setTooltip('A few videos have been found that don\'t work with the API this extension uses. If you provide an API key, this extension will use the YouTube Data API as a backup.')
+					.setDisabled(true)
+			)
+			.addText((text) =>
+				text
+					.setValue(this.plugin.settings.youtubeApiKey)
+					.onChange(async (value) => {
+						this.plugin.settings.youtubeApiKey = value;
+						await this.plugin.saveSettings();
+					})
+			);
 	}
 }

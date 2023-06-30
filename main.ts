@@ -99,6 +99,7 @@ export default class ThumbyPlugin extends Plugin {
 			// Sketchy? Can get be called infinitely if output from this.storeVideoInfo
 			// doesn't make this.parseStoredInfo set info.infoStored to true
 			if (this.settings.storeInfo && !info.infoStored) {
+				console.log('STORING INFO');
 				this.storeVideoInfo(info, el, ctx);
 			}
 
@@ -354,7 +355,7 @@ export default class ThumbyPlugin extends Plugin {
 				file = await this.app.vault.createBinary(filePath, req.arrayBuffer);
 			}
 		} catch (error) {
-      		// If error when saving, just return thumbnail url
+			// If error when saving, just return thumbnail url
 			console.log(error);
 
 			return info.thumbnail;
@@ -440,6 +441,8 @@ export default class ThumbyPlugin extends Plugin {
 				info.vidFound = true;
 			}
 			else if(this.settings.youtubeApiKey) {
+				console.log('Using YouTube API');
+
 				const videoId = await this.getVideoId(url);
 				const youtubeUrl = `https://youtube.googleapis.com/youtube/v3/videos?part=snippet&id=${videoId}&key=${this.settings.youtubeApiKey}`;
 				const youtubeReqParam: RequestUrlParam = {
@@ -447,12 +450,18 @@ export default class ThumbyPlugin extends Plugin {
 					throw: false
 				};
 				const youtubeApiRes = await requestUrl(youtubeReqParam);
-				
+
 				if (youtubeApiRes.status === 200) {
 					const snippet = youtubeApiRes.json.items[0].snippet;
+
+					console.log(snippet);
+
+
 					info.title = snippet.title;
 					info.author = snippet.channelTitle;
+					info.authorUrl = 'javascript:void(0);';
 					info.vidFound = true;
+					// console.log(info);
 				}
 			}
 
