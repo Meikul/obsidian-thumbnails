@@ -91,6 +91,17 @@ export default class ThumbySettingTab extends PluginSettingTab {
 								})
 						);
 				}
+				new Setting(containerEl)
+					.setName('YouTube API Key')
+					.setDesc('The API Key for the YouTube Data API')
+					.addText((text) =>
+						text
+							.setValue(this.plugin.settings.youtubeApiKey)
+							.onChange(async (value) => {
+								this.plugin.settings.youtubeApiKey = value;
+								await this.plugin.saveSettings();
+							})
+					);
 			}
 		}
 	}
