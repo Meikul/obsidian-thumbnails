@@ -302,28 +302,27 @@ export default class ThumbyPlugin extends Plugin {
 		const currentNote = this.app.workspace.getActiveFile();
 
 		if (this.settings.imageLocation === 'specifiedFolder') {
-
 			filePath = `${this.settings.imageFolder}/${id}.jpg`;
 		}
 		else {
 			//@ts-ignore
-			let attachmentPath = this.app.vault.getConfig('attachmentFolderPath');
+			// let attachmentPath = this.app.vault.getConfig('attachmentFolderPath');
 			// If last character is '/', trim it
-			if(attachmentPath.substring(attachmentPath.length - 1) === '/'){
-				attachmentPath = attachmentPath.substring(0, attachmentPath.length - 1);
-			}
+			// if(attachmentPath.substring(attachmentPath.length - 1) === '/'){
+			// 	attachmentPath = attachmentPath.substring(0, attachmentPath.length - 1);
+			// }
 			// filePath = `${attachmentPath}/${id}.jpg`;
-			console.log(attachmentPath);
-
-			console.log(this.app.vault.adapter);
-
-			console.log(currentNote);
 
 			//@ts-ignore
 			filePath = await this.app.vault.getAvailablePathForAttachments(id, 'jpg', currentNote);
 			// method source: https://forum.obsidian.md/t/api-get-the-directory-of-the-default-location-for-new-attachments-setting/36847/2
 
-			console.log('default location');
+
+			//Regex to remove number from end of path from `getAvailablePathForAttachments`
+			const pathRegex = /(.*) \d+\.jpg/;
+			filePath = filePath.replace(pathRegex, '$1.jpg');
+
+			console.log('default attachment location');
 		}
 
 		console.log(`filePath: ${filePath}`);
@@ -332,7 +331,9 @@ export default class ThumbyPlugin extends Plugin {
 		const existingFile = this.app.vault.getAbstractFileByPath(filePath);
 		// this check isn't catching relative subfolder paths
 
-		console.log(`existingFile: ${existingFile}`);
+		// console.log(`existingFile: ${existingFile}`);
+		console.log(existingFile);
+
 
 		if (existingFile) {
 			// file exists
@@ -343,10 +344,7 @@ export default class ThumbyPlugin extends Plugin {
 			url: info.thumbnail
 		}
 
-
-
 		let file;
-
 		try {
 			const req = await requestUrl(reqParam);
 
@@ -441,7 +439,7 @@ export default class ThumbyPlugin extends Plugin {
 				info.vidFound = true;
 			}
 			else if(this.settings.youtubeApiKey) {
-				console.log('Using YouTube API');
+				console.log('Oembed failed, using YouTube API');
 
 				const videoId = await this.getVideoId(url);
 				const youtubeUrl = `https://youtube.googleapis.com/youtube/v3/videos?part=snippet&id=${videoId}&key=${this.settings.youtubeApiKey}`;
@@ -452,16 +450,32 @@ export default class ThumbyPlugin extends Plugin {
 				const youtubeApiRes = await requestUrl(youtubeReqParam);
 
 				if (youtubeApiRes.status === 200) {
-					const snippet = youtubeApiRes.json.items[0].snippet;
+					const vidSnippet = youtubeApiRes.json.items[0].snippet;
 
-					console.log(snippet);
+					info.authorUrl = 'javascript:void(0)';
+					const channelQueryUrl = `https://youtube.googleapis.com/youtube/v3/channels?part=snippet&id=${vidSnippet.channelId}&key=${this.settings.youtubeApiKey}`;
+					const channelQueryParam: RequestUrlParam = {
+						url: channelQueryUrl,
+						throw: false
+					};
+					const channelQueryRes = await requestUrl(channelQueryParam);
 
+					if(channelQueryRes.status === 200){
+						const channelSnippet = channelQueryRes.json.items[0].snippet;
+						const channelCustomUrl = channelSnippet.customUrl;
+						const channelUrl = `https://www.youtube.com/${channelCustomUrl}`;
+						info.authorUrl = channelUrl;
+						console.log(channelSnippet);
+					}
 
-					info.title = snippet.title;
-					info.author = snippet.channelTitle;
-					info.authorUrl = 'javascript:void(0);';
+					console.log(vidSnippet);
+
+					info.title = vidSnippet.title;
+					info.author = vidSnippet.channelTitle;
+					// The api doesn't give back an author url. Could make another API call to find author url using channel ID.
+					// To avoid making another API call, I'm just making it an empty link.
+					// info.authorUrl = 'javascript:void(0);';
 					info.vidFound = true;
-					// console.log(info);
 				}
 			}
 
