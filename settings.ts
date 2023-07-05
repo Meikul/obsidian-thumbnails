@@ -95,11 +95,12 @@ export default class ThumbySettingTab extends PluginSettingTab {
 		}
 		new Setting(containerEl)
 			.setName('YouTube API Key (optional)')
-			.setDesc('The API Key for the YouTube Data API')
+			.setDesc('An API Key for the YouTube Data API')
 			.addExtraButton((btn) =>
 				btn
 					.setIcon('info')
-					.setTooltip('A few videos have been found that don\'t work with the API this extension uses. If you provide an API key, this extension will use the YouTube Data API as a backup.')
+					//@ts-ignore
+					.setTooltip('A few videos have been discovered that can\'t be found the normal way. If you provide an API key for the YouTube Data API, this plugin will use the API as a backup.', {placement: 'top'})
 					.setDisabled(true)
 			)
 			.addText((text) =>

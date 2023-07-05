@@ -138,8 +138,11 @@ export default class ThumbyPlugin extends Plugin {
 		let thumbnailUrl = info.thumbnail;
 		if(this.pathIsLocal(thumbnailUrl)){
 			const file = this.app.vault.getAbstractFileByPath(thumbnailUrl);
-			//@ts-ignore
-			thumbnailUrl = this.app.vault.getResourcePath(file);
+
+			if(file){
+				//@ts-ignore
+				thumbnailUrl = this.app.vault.getResourcePath(file);
+			}
 		}
 
 		const container = el.createEl('a', { href: info.url });
@@ -244,6 +247,9 @@ export default class ThumbyPlugin extends Plugin {
 
 			if (existingFile) {
 				info.imageSaved = true;
+			}
+			else if (this.settings.saveImages){
+				return info;
 			}
 
 			if (!this.settings.saveImages) {
@@ -438,7 +444,7 @@ export default class ThumbyPlugin extends Plugin {
 				info.authorUrl = res.json.author_url;
 				info.vidFound = true;
 			}
-			else if(this.settings.youtubeApiKey) {
+			else if(this.settings.youtubeApiKey && isYoutube) {
 				console.log('Oembed failed, using YouTube API');
 
 				const videoId = await this.getVideoId(url);
@@ -465,10 +471,7 @@ export default class ThumbyPlugin extends Plugin {
 						const channelCustomUrl = channelSnippet.customUrl;
 						const channelUrl = `https://www.youtube.com/${channelCustomUrl}`;
 						info.authorUrl = channelUrl;
-						console.log(channelSnippet);
 					}
-
-					console.log(vidSnippet);
 
 					info.title = vidSnippet.title;
 					info.author = vidSnippet.channelTitle;
