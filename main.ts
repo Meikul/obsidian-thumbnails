@@ -1,4 +1,4 @@
-import { Editor, MarkdownRenderer, MarkdownRenderChild, Plugin, MarkdownView, Notice, requestUrl, RequestUrlParam, MarkdownPostProcessorContext, EditorPosition, TAbstractFile } from 'obsidian';
+import { Editor, MarkdownRenderer, MarkdownRenderChild, Plugin, MarkdownView, Notice, requestUrl, RequestUrlParam, MarkdownPostProcessorContext, EditorPosition, TAbstractFile, TFile } from 'obsidian';
 import ThumbySettingTab from "./settings";
 
 interface VidInfo {
@@ -96,10 +96,9 @@ export default class ThumbyPlugin extends Plugin {
 			}
 
 
-			// Sketchy? Can get be called infinitely if output from this.storeVideoInfo
-			// doesn't make this.parseStoredInfo set info.infoStored to true
+			// Sketchy? Can get be called infinitely if this.storeVideoInfo changes text
+			// and it doesn't make this.parseStoredInfo set info.infoStored to true
 			if (this.settings.storeInfo && !info.infoStored) {
-				console.log('STORING INFO');
 				this.storeVideoInfo(info, el, ctx);
 			}
 
@@ -117,7 +116,7 @@ export default class ThumbyPlugin extends Plugin {
 				const clipText = await navigator.clipboard.readText();
 				const id = await this.getVideoId(clipText);
 				if (id === '') {
-					new Notice('No valid video in clipboard');
+					new Notice('No valid video in clipboard', 2000);
 					return;
 				}
 				editor.replaceSelection(`\`\`\`vid\n${clipText}\n\`\`\``);
@@ -262,6 +261,7 @@ export default class ThumbyPlugin extends Plugin {
 
 		info.infoStored = true;
 
+
 		return info;
 	}
 
@@ -303,7 +303,6 @@ export default class ThumbyPlugin extends Plugin {
 		//   - As is relative paths in `filePath` turn out relative to vault root
 		const id = await this.getVideoId(info.url);
 		let filePath = '';
-		console.log('save image');
 
 		const currentNote = this.app.workspace.getActiveFile();
 
@@ -327,18 +326,11 @@ export default class ThumbyPlugin extends Plugin {
 			//Regex to remove number from end of path from `getAvailablePathForAttachments`
 			const pathRegex = /(.*) \d+\.jpg/;
 			filePath = filePath.replace(pathRegex, '$1.jpg');
-
-			console.log('default attachment location');
 		}
-
-		console.log(`filePath: ${filePath}`);
 
 
 		const existingFile = this.app.vault.getAbstractFileByPath(filePath);
 		// this check isn't catching relative subfolder paths
-
-		// console.log(`existingFile: ${existingFile}`);
-		console.log(existingFile);
 
 
 		if (existingFile) {
@@ -346,17 +338,34 @@ export default class ThumbyPlugin extends Plugin {
 			return existingFile.path;
 		}
 
+		const folderMatch = filePath.match(/(.+)\/.+\.jpg/);
+		if(folderMatch){
+			const folderPath = folderMatch[1];
+
+			const existingFolder = this.app.vault.getAbstractFileByPath(folderPath);
+
+
+			if (this.settings.imageLocation === 'specifiedFolder' && !existingFolder) {
+				new Notice(`Thumbnails: The folder you specified (${this.settings.imageFolder}) does not exist.`);
+				return info.thumbnail;
+			}
+		}
+
 		const reqParam: RequestUrlParam = {
 			url: info.thumbnail
 		}
 
-		let file;
+		let file: TFile;
+
 		try {
 			const req = await requestUrl(reqParam);
 
 			if (req.status === 200) {
 				// Relative paths in `filePath` turn out relative to vault root
 				file = await this.app.vault.createBinary(filePath, req.arrayBuffer);
+			}
+			else{
+				// HTTP fail
 			}
 		} catch (error) {
 			// If error when saving, just return thumbnail url
@@ -365,10 +374,13 @@ export default class ThumbyPlugin extends Plugin {
 			return info.thumbnail;
 		}
 
-		console.log(`Path ${file.path}`);
 
-		const localUrl = file.path;
-		return localUrl;
+		if(file){
+			const localUrl = file.path;
+			return localUrl;
+		}
+
+		return info.thumbnail;
 	}
 
 	getTrimmedResourcePath(file: TAbstractFile): string {
@@ -445,7 +457,7 @@ export default class ThumbyPlugin extends Plugin {
 				info.vidFound = true;
 			}
 			else if(this.settings.youtubeApiKey && isYoutube) {
-				console.log('Oembed failed, using YouTube API');
+				console.log('Thumbnails: Oembed failed, using YouTube API');
 
 				const videoId = await this.getVideoId(url);
 				const youtubeUrl = `https://youtube.googleapis.com/youtube/v3/videos?part=snippet&id=${videoId}&key=${this.settings.youtubeApiKey}`;
