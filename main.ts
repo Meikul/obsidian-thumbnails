@@ -57,6 +57,7 @@ export default class ThumbyPlugin extends Plugin {
 		this.addSettingTab(new ThumbySettingTab(this.app, this));
 
 		this.registerMarkdownCodeBlockProcessor('vid', async (source, el, ctx) => {
+			this.createDummyBlock(el);
 			const sourceLines = source.trim().split('\n');
 			const url = sourceLines[0];
 			let info: VidInfo;
@@ -71,6 +72,7 @@ export default class ThumbyPlugin extends Plugin {
 
 			if (info.networkError && !info.infoStored) {
 				// If offline and info not stored, just show link
+				this.removeDummyBlock(el);
 				const url = source.trim().split('\n')[0];
 				el.createEl('a', { text: url, href: url });
 				return;
@@ -85,7 +87,7 @@ export default class ThumbyPlugin extends Plugin {
 
 			if (!info.vidFound) {
 				const component = new MarkdownRenderChild(el);
-
+				this.removeDummyBlock(el);
 				MarkdownRenderer.renderMarkdown(
 					`>[!WARNING] Cannot find video\n>${info.url}`,
 					el,
@@ -97,7 +99,7 @@ export default class ThumbyPlugin extends Plugin {
 
 			if (this.hasManyUrls(sourceLines)){
 				const component = new MarkdownRenderChild(el);
-
+				this.removeDummyBlock(el);
 				MarkdownRenderer.renderMarkdown(
 					`>[!WARNING] Cannot accept multiple URLs yet`,
 					el,
@@ -118,6 +120,7 @@ export default class ThumbyPlugin extends Plugin {
 				this.removeStoredInfo(info, el, ctx);
 			}
 
+			this.removeDummyBlock(el);
 			this.createThumbnail(el, info);
 		});
 
@@ -146,6 +149,7 @@ export default class ThumbyPlugin extends Plugin {
 	}
 
 	createThumbnail(el: HTMLElement, info: VidInfo) {
+
 		let thumbnailUrl = info.thumbnail;
 		if(this.pathIsLocal(thumbnailUrl)){
 			const file = this.app.vault.getAbstractFileByPath(thumbnailUrl);
@@ -167,6 +171,23 @@ export default class ThumbyPlugin extends Plugin {
 		const timestamp = this.getTimestamp(info.url);
 		if(timestamp !== ''){
 			container.createDiv({text: timestamp}).addClass('timestamp');
+		}
+	}
+
+	createDummyBlock(el: HTMLElement) {
+		const container = el.createDiv();
+		container.addClass('dummy-container');
+		// container.createDiv().addClass('dummy-image');
+		// container.createDiv().addClass('dummy-title');
+	}
+
+	removeDummyBlock(el: HTMLElement) {
+		const dummy = el.querySelector('.dummy-container');
+		if(dummy){
+			dummy.addClass('hidden');
+			setTimeout(() => {
+				el.removeChild(dummy);
+			}, 1);
 		}
 	}
 
