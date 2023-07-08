@@ -29,6 +29,18 @@ const DEFAULT_SETTINGS: Partial<ThumbySettings> = {
 	youtubeApiKey: ''
 };
 
+const URL_TYPES = {
+	youtube: [
+		{match: 'https://www.youtube.com/watch?v=', idPattern: /v=([-\w\d]+)/},
+		{match: 'https://youtu.be/', idPattern: /youtu.be\/([-\w\d]+)/},
+		{match: 'youtube.com/shorts/', idPattern: /shorts\/([-\w\d]+)/},
+		{match: 'youtube.com/live/', idPattern: /live\/(\w+)/}
+	],
+	vimeo: [
+		{match: 'https://vimeo.com/', idPattern: /vimeo.com\/([\w\d]+)/}
+	]
+};
+
 export default class ThumbyPlugin extends Plugin {
 	settings: ThumbySettings;
 
@@ -428,8 +440,19 @@ export default class ThumbyPlugin extends Plugin {
 			imageSaved: false
 		};
 		let reqUrl = '';
-		const isYoutube = url.includes('https://www.youtube.com/watch?v=') || url.includes('https://youtu.be/') || url.includes('youtube.com/shorts/');
-		const isVimeo = url.includes('https://vimeo.com/')
+		let isYoutube = false;
+		for (const type of URL_TYPES.youtube) {
+			if(url.includes(type.match)){
+				isYoutube = true;
+			}
+		}
+		// const isYoutube = url.includes('https://www.youtube.com/watch?v=') || url.includes('https://youtu.be/') || url.includes('youtube.com/shorts/') || url.includes('youtube.com/live/');
+		let isVimeo = false;
+		for (const type of URL_TYPES.vimeo) {
+			if (url.includes(type.match)) {
+				isVimeo = true;
+			}
+		}
 
 		// Use oEmbed to get data (https://oembed.com/)
 		if (isYoutube) {
@@ -515,28 +538,43 @@ export default class ThumbyPlugin extends Plugin {
 
 	async getVideoId(url: string): Promise<string> {
 		let id = '';
-		if (url.includes('https://www.youtube.com/watch?v=')) {
-			const matches = url.match(/v=([-\w\d]+)/);
-			if (matches !== null) {
-				id = matches[1]
+		for (const type of URL_TYPES.youtube) {
+			if(url.includes(type.match)){
+				const matches = url.match(type.idPattern);
+				if(matches !== null){
+					id = matches[1];
+				}
 			}
 		}
-		else if (url.includes('https://youtu.be/')) {
-			const matches = url.match(/youtu.be\/([-\w\d]+)/);
+		// if (url.includes(URL_TYPES.youtube[0][0])) {
+		// 	const matches = url.match(/v=([-\w\d]+)/);
+		// 	if (matches !== null) {
+		// 		id = matches[1];
+		// 	}
+		// }
+		// else if (url.includes(URL_TYPES.youtube[1][0])) {
+		// 	const matches = url.match(/youtu.be\/([-\w\d]+)/);
+		// 	if (matches !== null) {
+		// 		id = matches[1];
+		// 	}
+		// }
+		// else if (url.includes(URL_TYPES.youtube[2])) {
+		// 	const matches = url.match(/shorts\/([-\w\d]+)/);
+		// 	if (matches !== null) {
+		// 		id = matches[1];
+		// 	}
+		// }
+		// else if (url.includes(URL_TYPES.youtube[3])) {
+		// 	const matches = url.match(/live\/(\w+)/);
+		// 	if(matches !== null){
+		// 		id = matches[1];
+		// 	}
+		// }
+		const vimeoType = URL_TYPES.vimeo[0];
+		if (url.includes(vimeoType.match)) {
+			const matches = url.match(vimeoType.idPattern);
 			if (matches !== null) {
-				id = matches[1]
-			}
-		}
-		else if (url.includes('youtube.com/shorts/')) {
-			const matches = url.match(/shorts\/([-\w\d]+)/);
-			if (matches !== null) {
-				id = matches[1]
-			}
-		}
-		else if (url.includes('https://vimeo.com/')) {
-			const matches = url.match(/vimeo.com\/([\w\d]+)/);
-			if (matches !== null) {
-				id = matches[1]
+				id = matches[1];
 				if (!(/^[0-9]+$/).exec(id)) {
 					// Special vimeo url's that don't contain a video id
 					id = await this.fetchVimeoVideoId(url);
