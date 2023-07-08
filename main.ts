@@ -446,7 +446,6 @@ export default class ThumbyPlugin extends Plugin {
 				isYoutube = true;
 			}
 		}
-		// const isYoutube = url.includes('https://www.youtube.com/watch?v=') || url.includes('https://youtu.be/') || url.includes('youtube.com/shorts/') || url.includes('youtube.com/live/');
 		let isVimeo = false;
 		for (const type of URL_TYPES.vimeo) {
 			if (url.includes(type.match)) {
@@ -546,30 +545,6 @@ export default class ThumbyPlugin extends Plugin {
 				}
 			}
 		}
-		// if (url.includes(URL_TYPES.youtube[0][0])) {
-		// 	const matches = url.match(/v=([-\w\d]+)/);
-		// 	if (matches !== null) {
-		// 		id = matches[1];
-		// 	}
-		// }
-		// else if (url.includes(URL_TYPES.youtube[1][0])) {
-		// 	const matches = url.match(/youtu.be\/([-\w\d]+)/);
-		// 	if (matches !== null) {
-		// 		id = matches[1];
-		// 	}
-		// }
-		// else if (url.includes(URL_TYPES.youtube[2])) {
-		// 	const matches = url.match(/shorts\/([-\w\d]+)/);
-		// 	if (matches !== null) {
-		// 		id = matches[1];
-		// 	}
-		// }
-		// else if (url.includes(URL_TYPES.youtube[3])) {
-		// 	const matches = url.match(/live\/(\w+)/);
-		// 	if(matches !== null){
-		// 		id = matches[1];
-		// 	}
-		// }
 		const vimeoType = URL_TYPES.vimeo[0];
 		if (url.includes(vimeoType.match)) {
 			const matches = url.match(vimeoType.idPattern);
