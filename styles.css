@@ -10,6 +10,8 @@
 	margin: 10px 0;
 	max-width: 400px;
 	width: 100%;
+	/* border-radius: 8px; */
+	/* overflow: hidden; */
 	box-shadow: none;
 }
 
@@ -20,7 +22,7 @@
 	line-height: 1.3;
 	transition: background 0.3s;
 	position: relative;
-	z-index: -1;
+	z-index: 1;
 }
 
 /* .block-language-vid>a:hover{
@@ -43,6 +45,7 @@
 	width: 150px;
 	border-radius: 8px;
 	position: relative;
+	z-index: 2;
 }
 
 .block-language-vid .thumbnail .timestamp{
@@ -53,6 +56,8 @@
 	left: 4px;
 	padding: 0 5px 0 5px;
 	background: rgba(0, 0, 0, 0.75);
+	border-radius: 4px;
+	z-index: 3;
 }
 
 .block-language-vid .thumbnail-author{
