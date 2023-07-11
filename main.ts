@@ -160,6 +160,14 @@ export default class ThumbyPlugin extends Plugin {
 			}
 		}
 
+		// let sizer = el;
+		// while(sizer && sizer.offsetWidth === 0){
+		// 	sizer = sizer.parentElement?.closest('*');
+		// }
+		// if(sizer && sizer.offsetWidth <= 300){
+		// 	el.addClass('card-style');
+		// }
+
 		const container = el.createEl('a', { href: info.url });
 		container.addClass('thumbnail');
 		container.createEl('img', { attr: { 'src': thumbnailUrl } }).addClass('thumbnail-img');
@@ -184,10 +192,7 @@ export default class ThumbyPlugin extends Plugin {
 	removeDummyBlock(el: HTMLElement) {
 		const dummy = el.querySelector('.dummy-container');
 		if(dummy){
-			dummy.addClass('hidden');
-			setTimeout(() => {
-				el.removeChild(dummy);
-			}, 1);
+			el.removeChild(dummy);
 		}
 	}
 

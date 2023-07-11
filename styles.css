@@ -1,5 +1,10 @@
 .block-language-vid{
 	position: relative;
+	/* display: block; */
+}
+
+.block-language-vid~.edit-block-button{
+	z-index: 10;
 }
 
 .block-language-vid>a.thumbnail{
@@ -137,4 +142,37 @@
 
 .mod-settings .setting-item.default-attachment-info .setting-item-description{
 	font-style: italic;
+}
+
+.kanban-plugin__item-title .block-language-vid{
+	&>a.thumbnail{
+		flex-direction: column;
+		/* max-width: 250px; */
+	}
+	.thumbnail-img{
+		width: 100%;
+	}
+	.thumbnail-text{
+		padding: 16px 2px;
+		margin: -8px 0px;
+	}
+}
+
+@media (max-width: 400px) {
+	.block-language-vid{
+		&>a.thumbnail {
+			margin: auto;
+			flex-direction: column;
+			max-width: 250px;
+		}
+
+		.thumbnail-img {
+			width: 100%;
+		}
+
+		.thumbnail-text {
+			padding: 16px 2px;
+			margin: -8px 0px;
+		}
+	}
 }
