@@ -94,6 +94,18 @@ export default class ThumbySettingTab extends PluginSettingTab {
 			}
 		}
 		new Setting(containerEl)
+			.setName('Responsive Card-Style Thumbnails')
+			.setDesc('Switch to card-style thumbnails for narrow screens')
+			.addToggle((toggle) =>
+				toggle
+					.setValue(this.plugin.settings.responsiveCardStyle)
+					.onChange(async (value) => {
+						this.plugin.settings.responsiveCardStyle = value;
+						await this.plugin.saveSettings();
+						this.display();
+					})
+			);
+		new Setting(containerEl)
 			.setName('YouTube API Key (optional)')
 			.setDesc('An API Key for the YouTube Data API')
 			.addExtraButton((btn) =>

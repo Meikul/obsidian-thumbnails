@@ -18,6 +18,7 @@ interface ThumbySettings {
 	saveImages: boolean;
 	imageLocation: string;
 	imageFolder: string;
+	responsiveCardStyle: boolean;
 	youtubeApiKey: string;
 }
 
@@ -26,6 +27,7 @@ const DEFAULT_SETTINGS: Partial<ThumbySettings> = {
 	saveImages: false,
 	imageLocation: 'defaultAttachment',
 	imageFolder: '',
+	responsiveCardStyle: true,
 	youtubeApiKey: ''
 };
 
@@ -51,6 +53,29 @@ export default class ThumbyPlugin extends Plugin {
 
 	async saveSettings() {
 		await this.saveData(this.settings);
+		// Run responsive check in case responsiveCardStyle setting changed
+		const editors = document.querySelectorAll('.cm-editor');
+		for (const key in editors) {
+			if (Object.prototype.hasOwnProperty.call(editors, key)) {
+				const editor = editors[key];
+				this.responsiveCardCheck(editor);
+			}
+		}
+	}
+
+	responsiveCardCheck(editor: Element){
+		const vidBlocks = editor.querySelectorAll('.block-language-vid');
+		for (const key in vidBlocks) {
+			if (Object.prototype.hasOwnProperty.call(vidBlocks, key)) {
+				const block = vidBlocks[key] as HTMLElement;
+				if (this.settings.responsiveCardStyle && block && block.offsetWidth < 370) {
+					block.addClass('thumbnail-card-style');
+				}
+				else {
+					block.removeClass('thumbnail-card-style');
+				}
+			}
+		}
 	}
 
 	async onload() {
@@ -59,18 +84,7 @@ export default class ThumbyPlugin extends Plugin {
 
 		this.editorObserver = new ResizeObserver((entries) => {
 			for (const editor of entries) {
-				const vidBlocks = editor.target.querySelectorAll('.block-language-vid');
-				for (const key in vidBlocks) {
-					if(Object.prototype.hasOwnProperty.call(vidBlocks, key)){
-						const block  = vidBlocks[key] as HTMLElement;
-						if(block && block.offsetWidth < 370){
-							block.addClass('thumbnail-card-style');
-						}
-						else{
-							block.removeClass('thumbnail-card-style');
-						}
-					}
-				}
+				this.responsiveCardCheck(editor.target);
 			}
 		});
 
