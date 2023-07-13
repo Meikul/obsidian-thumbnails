@@ -62,8 +62,8 @@ export default class ThumbyPlugin extends Plugin {
 				const vidBlocks = editor.target.querySelectorAll('.block-language-vid');
 				for (const key in vidBlocks) {
 					if(Object.prototype.hasOwnProperty.call(vidBlocks, key)){
-						const block  = vidBlocks[key];
-						if(block.offsetWidth < 370){
+						const block  = vidBlocks[key] as HTMLElement;
+						if(block && block.offsetWidth < 370){
 							block.addClass('thumbnail-card-style');
 						}
 						else{
