@@ -144,10 +144,12 @@
 	font-style: italic;
 }
 
-.kanban-plugin__item-title .block-language-vid{
+.kanban-plugin__item-title .block-language-vid,
+:not(.kanban-plugin__item-title) .block-language-vid.thumbnail-card-style{
 	&>a.thumbnail{
+		margin: auto;
 		flex-direction: column;
-		/* max-width: 250px; */
+		max-width: 250px;
 	}
 	.thumbnail-img{
 		width: 100%;
@@ -158,21 +160,19 @@
 	}
 }
 
-@media (max-width: 400px) {
-	.block-language-vid{
-		&>a.thumbnail {
-			margin: auto;
-			flex-direction: column;
-			max-width: 250px;
-		}
-
-		.thumbnail-img {
-			width: 100%;
-		}
-
-		.thumbnail-text {
-			padding: 16px 2px;
-			margin: -8px 0px;
-		}
+/* :not(.kanban-plugin__item-title) .block-language-vid.thumbnail-card-style {
+	&>a.thumbnail {
+		margin: auto;
+		flex-direction: column;
+		max-width: 250px;
 	}
-}
+
+	.thumbnail-img {
+		width: 100%;
+	}
+
+	.thumbnail-text {
+		padding: 16px 2px;
+		margin: -8px 0px;
+	}
+} */

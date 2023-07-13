@@ -43,6 +43,7 @@ const URL_TYPES = {
 
 export default class ThumbyPlugin extends Plugin {
 	settings: ThumbySettings;
+	editorObserver: ResizeObserver;
 
 	async loadSettings() {
 		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
@@ -55,6 +56,32 @@ export default class ThumbyPlugin extends Plugin {
 	async onload() {
 		await this.loadSettings();
 		this.addSettingTab(new ThumbySettingTab(this.app, this));
+
+		this.editorObserver = new ResizeObserver((entries) => {
+			for (const editor of entries) {
+				const vidBlocks = editor.target.querySelectorAll('.block-language-vid');
+				for (const key in vidBlocks) {
+					if(Object.prototype.hasOwnProperty.call(vidBlocks, key)){
+						const block  = vidBlocks[key];
+						if(block.offsetWidth < 370){
+							block.addClass('thumbnail-card-style');
+						}
+						else{
+							block.removeClass('thumbnail-card-style');
+						}
+					}
+				}
+			}
+		});
+
+		const editors = document.querySelectorAll('.cm-editor');
+		for (const key in editors) {
+			if (Object.prototype.hasOwnProperty.call(editors, key)) {
+				const editor = editors[key];
+
+				this.editorObserver.observe(editor);
+			}
+		}
 
 		this.registerMarkdownCodeBlockProcessor('vid', async (source, el, ctx) => {
 			this.createDummyBlock(el);
@@ -140,7 +167,7 @@ export default class ThumbyPlugin extends Plugin {
 	}
 
 	onunload() {
-
+		this.editorObserver.disconnect();
 	}
 
 	hasManyUrls(lines: string[]): boolean{
@@ -159,14 +186,6 @@ export default class ThumbyPlugin extends Plugin {
 				thumbnailUrl = this.app.vault.getResourcePath(file);
 			}
 		}
-
-		// let sizer = el;
-		// while(sizer && sizer.offsetWidth === 0){
-		// 	sizer = sizer.parentElement?.closest('*');
-		// }
-		// if(sizer && sizer.offsetWidth <= 300){
-		// 	el.addClass('card-style');
-		// }
 
 		const container = el.createEl('a', { href: info.url });
 		container.addClass('thumbnail');
