@@ -45,7 +45,7 @@ const URL_TYPES = {
 
 export default class ThumbyPlugin extends Plugin {
 	settings: ThumbySettings;
-	editorObserver: ResizeObserver;
+	private editorObserver: ResizeObserver;
 
 	async loadSettings() {
 		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
@@ -293,22 +293,45 @@ export default class ThumbyPlugin extends Plugin {
 			return info;
 		}
 
+		const parsedInput = {
+			Url: '',
+			Title: '',
+			Author: '',
+			ThumbnailUrl: '',
+			AuthorUrl: ''
+		};
+
 		for (const [i, line] of input.entries()) {
 			if (i !== 0) {
-				const sepIndex = line.indexOf(': ');
-				if (sepIndex === -1) {
+				const matches = line.match(/(\w+): (.+)/);
+				if (matches === null) {
 					return info;
 				}
-				const d = line.substring(sepIndex + 2);
-				input[i] = d;
+				const key = matches[1];
+				const val = matches[2];
+
+				parsedInput[key as keyof typeof parsedInput] = val;
+			}
+			else {
+				parsedInput['Url'] = input[0];
 			}
 		}
 
-		info.url = input[0];
-		info.title = input[1];
-		info.author = input[2];
-		info.thumbnail = input[3];
-		info.authorUrl = input[4];
+		// Check each item is filled
+		for (const key in parsedInput) {
+			if (Object.prototype.hasOwnProperty.call(parsedInput, key)) {
+				const value = parsedInput[key as keyof typeof parsedInput];
+				if (!value || value === '') {
+					return info;
+				}
+			}
+		}
+
+		info.url = parsedInput['Url'];
+		info.title = parsedInput['Title'];
+		info.author = parsedInput['Author'];
+		info.thumbnail = parsedInput['ThumbnailUrl'];
+		info.authorUrl = parsedInput['AuthorUrl'];
 		info.vidFound = true;
 
 		if (this.pathIsLocal(info.thumbnail)) {
