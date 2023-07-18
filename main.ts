@@ -178,6 +178,22 @@ export default class ThumbyPlugin extends Plugin {
 				editor.replaceSelection(`\`\`\`vid\n${clipText}\n\`\`\``);
 			}
 		});
+
+		this.addCommand({
+			id: "insert-video-title-link",
+			name: "Insert link with video title from URL in clipboard",
+			editorCallback: async (editor: Editor, view: MarkdownView) => {
+				const clipText = await navigator.clipboard.readText();
+				const id = await this.getVideoId(clipText);
+				if (id === "") {
+					new Notice("No valid video in clipboard", 2000);
+					return;
+				}
+				const info = await this.getVideoInfo(clipText);
+
+				editor.replaceSelection(`[${info.title}](${info.url})`);
+			}
+		});
 	}
 
 	onunload() {
@@ -297,7 +313,7 @@ export default class ThumbyPlugin extends Plugin {
 			Url: '',
 			Title: '',
 			Author: '',
-			ThumbnailUrl: '',
+			Thumbnail: '',
 			AuthorUrl: ''
 		};
 
@@ -330,7 +346,7 @@ export default class ThumbyPlugin extends Plugin {
 		info.url = parsedInput['Url'];
 		info.title = parsedInput['Title'];
 		info.author = parsedInput['Author'];
-		info.thumbnail = parsedInput['ThumbnailUrl'];
+		info.thumbnail = parsedInput['Thumbnail'];
 		info.authorUrl = parsedInput['AuthorUrl'];
 		info.vidFound = true;
 
@@ -370,7 +386,7 @@ export default class ThumbyPlugin extends Plugin {
 			info.thumbnail = await this.saveImage(info);
 		}
 
-		const content = `\`\`\`vid\n${info.url}\nTitle: ${info.title}\nAuthor: ${info.author}\nThumbnailUrl: ${info.thumbnail}\nAuthorUrl: ${info.authorUrl}\n\`\`\``;
+		const content = `\`\`\`vid\n${info.url}\nTitle: ${info.title}\nAuthor: ${info.author}\nThumbnail: ${info.thumbnail}\nAuthorUrl: ${info.authorUrl}\n\`\`\``;
 
 		const view = this.app.workspace.getActiveViewOfType(MarkdownView);
 		if (view) {
