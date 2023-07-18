@@ -160,6 +160,14 @@
 	}
 }
 
+.snapshot-frame {
+	/* width: 100%; */
+}
+
+/* #snapshot-frame .ytp-pause-overlay{
+	display: none;
+} */
+
 /* :not(.kanban-plugin__item-title) .block-language-vid.thumbnail-card-style {
 	&>a.thumbnail {
 		margin: auto;

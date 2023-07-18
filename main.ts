@@ -1,5 +1,6 @@
-import { Editor, MarkdownRenderer, MarkdownRenderChild, Plugin, MarkdownView, Notice, requestUrl, RequestUrlParam, MarkdownPostProcessorContext, EditorPosition, TAbstractFile, TFile } from 'obsidian';
+import { Editor, MarkdownRenderer, MarkdownRenderChild, Plugin, MarkdownView, Notice, requestUrl, RequestUrlParam, MarkdownPostProcessorContext, EditorPosition, TAbstractFile, TFile, RequestUrlResponse } from 'obsidian';
 import ThumbySettingTab from "./settings";
+import SnapshotModal from './snapshot';
 
 interface VidInfo {
 	url: string;
@@ -43,9 +44,16 @@ const URL_TYPES = {
 	]
 };
 
+interface oEmbedRes {
+	res: RequestUrlResponse;
+	isYoutube: boolean;
+	isVimeo: boolean;
+}
+
 export default class ThumbyPlugin extends Plugin {
 	settings: ThumbySettings;
 	editorObserver: ResizeObserver;
+	testModal: SnapshotModal;
 
 	async loadSettings() {
 		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
@@ -81,6 +89,9 @@ export default class ThumbyPlugin extends Plugin {
 	async onload() {
 		await this.loadSettings();
 		this.addSettingTab(new ThumbySettingTab(this.app, this));
+
+		this.testModal = new SnapshotModal(this.app, this);
+		this.testModal.open();
 
 		this.editorObserver = new ResizeObserver((entries) => {
 			for (const editor of entries) {
@@ -178,10 +189,20 @@ export default class ThumbyPlugin extends Plugin {
 				editor.replaceSelection(`\`\`\`vid\n${clipText}\n\`\`\``);
 			}
 		});
+
+		this.addCommand({
+			id: "video-snapshot",
+			name: "Take video snapshot",
+			callback: () => {
+				const modal = new SnapshotModal(this.app, this);
+				modal.open();
+			}
+		});
 	}
 
 	onunload() {
 		this.editorObserver.disconnect();
+		this.testModal.close();
 	}
 
 	hasManyUrls(lines: string[]): boolean{
@@ -486,22 +507,12 @@ export default class ThumbyPlugin extends Plugin {
 		}
 	}
 
-	async getVideoInfo(url: string): Promise<VidInfo> {
-		const info: VidInfo = {
-			url: url,
-			thumbnail: '',
-			title: '',
-			author: '',
-			authorUrl: '',
-			vidFound: false,
-			networkError: false,
-			infoStored: false,
-			imageSaved: false
-		};
+	async getOembed(url: string): Promise<oEmbedRes>{
 		let reqUrl = '';
+
 		let isYoutube = false;
 		for (const type of URL_TYPES.youtube) {
-			if(url.includes(type.match)){
+			if (url.includes(type.match)) {
 				isYoutube = true;
 			}
 		}
@@ -519,17 +530,49 @@ export default class ThumbyPlugin extends Plugin {
 		else if (isVimeo) {
 			reqUrl = `https://vimeo.com/api/oembed.json?url=${url}`;
 		}
-		else {
-			//vid not found
-			return info;
-		}
+
+		let result = null;
 
 		try {
 			const reqParam: RequestUrlParam = {
 				url: reqUrl,
 				throw: false
 			};
-			const res = await requestUrl(reqParam);
+			result = await requestUrl(reqParam);
+		} catch (error) {
+			console.error(error);
+		}
+
+		const ret: oEmbedRes = {
+			res: result,
+			isYoutube: isYoutube,
+			isVimeo: isVimeo
+		}
+		return ret;
+	}
+
+	async getVideoInfo(url: string): Promise<VidInfo> {
+		const info: VidInfo = {
+			url: url,
+			thumbnail: '',
+			title: '',
+			author: '',
+			authorUrl: '',
+			vidFound: false,
+			networkError: false,
+			infoStored: false,
+			imageSaved: false
+		};
+
+
+		try {
+			const results = await this.getOembed(url);
+			const res = results.res;
+
+			if (!res) {
+				//vid not found
+				return info;
+			}
 
 			if (res.status === 200) {
 				info.title = res.json.title;
@@ -537,7 +580,7 @@ export default class ThumbyPlugin extends Plugin {
 				info.authorUrl = res.json.author_url;
 				info.vidFound = true;
 			}
-			else if(this.settings.youtubeApiKey && isYoutube) {
+			else if(this.settings.youtubeApiKey && results.isYoutube) {
 				console.log('Thumbnails: Oembed failed, using YouTube API');
 
 				const videoId = await this.getVideoId(url);
@@ -576,7 +619,7 @@ export default class ThumbyPlugin extends Plugin {
 			}
 
 			if (info.vidFound) {
-				if (isYoutube) {
+				if (results.isYoutube) {
 					// Returned thumbnail is usually letterboxed or wrong aspect ratio
 					const videoId = await this.getVideoId(url);
 					info.thumbnail = `https://i.ytimg.com/vi/${videoId}/mqdefault.jpg`;
