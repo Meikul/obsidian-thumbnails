@@ -181,7 +181,7 @@ export default class ThumbyPlugin extends Plugin {
 
 		this.addCommand({
 			id: "insert-video-title-link",
-			name: "Insert link with video title from URL in clipboard",
+			name: "Insert video title link from URL in clipboard",
 			editorCallback: async (editor: Editor, view: MarkdownView) => {
 				const clipText = await navigator.clipboard.readText();
 				const id = await this.getVideoId(clipText);

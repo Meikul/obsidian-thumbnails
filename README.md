@@ -4,7 +4,7 @@
 This plugin lets you insert video thumbnails into your notes to help you keep track of what you're actually linking.
 
 Works with Youtube and Vimeo.
-![GIF showing how to create a thumbnail with the plugin](https://raw.githubusercontent.com/Meikul/obsidian-thumbnails/master/demo_images/block_demo.gif)
+<img src="https://raw.githubusercontent.com/Meikul/obsidian-thumbnails/master/demo_images/block_demo.gif" alt="GIF showing how to create a thumbnail with the plugin">
 
 ## Usage
 Place a code block with the `vid` type, and include the link to your video:
@@ -18,10 +18,10 @@ https://youtu.be/dQw4w9WgXcQ
 ### Insert thumbnail from URL in clipboard
 If you have a video URL in your clipboard, this command will create the code block for you.
 
-### Insert link with video title from URL in clipboard
-If you have a video URL in your clipboard, this command will automatically find and insert the title in a simple link with the text set to the video's title.
+### Insert video title link from URL in clipboard
+If you have a video URL in your clipboard, this command will automatically create a link with the text set to the video title.
 
-<img src="https://raw.githubusercontent.com/Meikul/obsidian-thumbnails/master/demo_images/title_link_demo.gif" alt="GIF demonstrating the insert link with title command" width="480">
+<img src="https://raw.githubusercontent.com/Meikul/obsidian-thumbnails/master/demo_images/title_link_demo.gif" alt="GIF demonstrating the insert video title link command" width="480">
 
 ## Offline Options
 If you're offline, the thumbnails will just appear like a normal link.
