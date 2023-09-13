@@ -1,4 +1,4 @@
-import { Editor, MarkdownRenderer, MarkdownRenderChild, Plugin, MarkdownView, Notice, requestUrl, RequestUrlParam, MarkdownPostProcessorContext, EditorPosition, TAbstractFile, TFile } from 'obsidian';
+import { Editor, MarkdownRenderer, MarkdownRenderChild, Plugin, MarkdownView, Notice, requestUrl, RequestUrlParam, MarkdownPostProcessorContext, EditorPosition, TAbstractFile, TFile, WorkspaceLeaf } from 'obsidian';
 import ThumbySettingTab from "./settings";
 
 interface VidInfo {
@@ -54,7 +54,7 @@ export default class ThumbyPlugin extends Plugin {
 	async saveSettings() {
 		await this.saveData(this.settings);
 		// Run responsive check in case responsiveCardStyle setting changed
-		const editors = document.querySelectorAll('.cm-editor');
+		const editors = document.querySelectorAll('.workspace-leaf');
 		for (const key in editors) {
 			if (Object.prototype.hasOwnProperty.call(editors, key)) {
 				const editor = editors[key];
@@ -65,6 +65,7 @@ export default class ThumbyPlugin extends Plugin {
 
 	responsiveCardCheck(editor: Element){
 		const vidBlocks = editor.querySelectorAll('.block-language-vid');
+
 		for (const key in vidBlocks) {
 			if (Object.prototype.hasOwnProperty.call(vidBlocks, key)) {
 				const block = vidBlocks[key] as HTMLElement;
@@ -78,9 +79,37 @@ export default class ThumbyPlugin extends Plugin {
 		}
 	}
 
+	setEditorResizeObservers(){
+		this.editorObserver.disconnect();
+		const editorElems = document.querySelectorAll(".workspace-leaf");
+		for (const key in editorElems) {
+			if (Object.prototype.hasOwnProperty.call(editorElems, key)) {
+				const editor = editorElems[key];
+
+				this.editorObserver.observe(editor);
+			}
+		}
+	}
+
+	getAllLeaves() {
+		const ret = [] as WorkspaceLeaf[];
+		this.app.workspace.iterateAllLeaves(leaf => { ret.push(leaf) })
+		return ret;
+	}
+
 	async onload() {
 		await this.loadSettings();
 		this.addSettingTab(new ThumbySettingTab(this.app, this));
+
+		let seenLeaves = new Set(this.getAllLeaves());
+		this.app.workspace.on("layout-change", () => {
+			const currentLeaves = this.getAllLeaves();
+			const newLeaves = currentLeaves.filter((leaf) => !seenLeaves.has(leaf)); // contains newly opened tabs
+			seenLeaves = new Set(currentLeaves);
+			if(newLeaves.length > 0){
+				this.setEditorResizeObservers();
+			}
+		});
 
 		this.editorObserver = new ResizeObserver((entries) => {
 			for (const editor of entries) {
@@ -88,13 +117,16 @@ export default class ThumbyPlugin extends Plugin {
 			}
 		});
 
-		const editors = document.querySelectorAll('.cm-editor');
-		for (const key in editors) {
-			if (Object.prototype.hasOwnProperty.call(editors, key)) {
-				const editor = editors[key];
-
-				this.editorObserver.observe(editor);
-			}
+		const editorElems = document.querySelectorAll('.workspace-leaf');
+		if(editorElems.length === 0){
+			// If it's a new window
+			document.addEventListener('DOMContentLoaded', () => {
+				this.setEditorResizeObservers();
+			});
+		}
+		else{
+			// If exiting window reloading the plugin
+			this.setEditorResizeObservers();
 		}
 
 		this.registerMarkdownCodeBlockProcessor('vid', async (source, el, ctx) => {
@@ -197,7 +229,9 @@ export default class ThumbyPlugin extends Plugin {
 	}
 
 	onunload() {
-		this.editorObserver.disconnect();
+		if (this.editorObserver) {
+			this.editorObserver.disconnect();
+		}
 	}
 
 	hasManyUrls(lines: string[]): boolean{
@@ -217,9 +251,12 @@ export default class ThumbyPlugin extends Plugin {
 			}
 		}
 
+
+
 		const container = el.createEl('a', { href: info.url });
 		container.addClass('thumbnail');
-		container.createEl('img', { attr: { 'src': thumbnailUrl } }).addClass('thumbnail-img');
+		const imgEl = container.createEl('img', { attr: { 'src': thumbnailUrl } });
+		imgEl.addClass("thumbnail-img");
 		const textBox = container.createDiv();
 		textBox.addClass('thumbnail-text');
 		textBox.createDiv({text: info.title, title: info.title}).addClass('thumbnail-title');
@@ -227,7 +264,36 @@ export default class ThumbyPlugin extends Plugin {
 
 		const timestamp = this.getTimestamp(info.url);
 		if(timestamp !== ''){
-			container.createDiv({text: timestamp}).addClass('timestamp');
+			const timestampEl = container.createDiv({text: timestamp});
+			timestampEl.addClass('timestamp');
+
+			// Resize observer on thumbnail img's
+			const resizeObserver = new ResizeObserver((entries) => {
+				for (const entry of entries) {
+					// Position timestamp
+					const timeTop = imgEl.offsetHeight - 22;
+					timestampEl.style.setProperty('top', `${timeTop}px`);
+				}
+			});
+
+			const domObserver = new MutationObserver(function(mutations) {
+
+				if(el.contains(imgEl)){
+
+					if(imgEl.offsetHeight === 0){
+						// return;
+					}
+					resizeObserver.observe(imgEl);
+					// const timeTop = imgEl.offsetHeight - 22;
+					// timestampEl.style.setProperty('top', `${timeTop}px`);
+					domObserver.disconnect();
+				}
+			});
+
+			domObserver.observe(document, {attributes: false, childList: true, characterData: false, subtree:true});
+
+
+			// timestampEl.style.top = `${imgEl.height}px`;
 		}
 	}
 

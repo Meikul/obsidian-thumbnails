@@ -16,7 +16,7 @@
 	max-width: 400px;
 	width: 100%;
 	/* border-radius: 8px; */
-	/* overflow: hidden; */
+	overflow: hidden;
 	box-shadow: none;
 }
 
@@ -57,7 +57,8 @@
 	font-size: calc(var(--font-text-size) - 5px);
 	display: block;
 	position: absolute;
-	bottom: 4px;
+	top: 4px;
+	/* bottom: 4px; */
 	left: 4px;
 	padding: 0 5px 0 5px;
 	background: rgba(0, 0, 0, 0.75);
@@ -148,6 +149,7 @@
 :not(.kanban-plugin__item-title) .block-language-vid.thumbnail-card-style{
 	&>a.thumbnail{
 		margin: auto;
+		position: relative;
 		flex-direction: column;
 		max-width: 250px;
 	}
