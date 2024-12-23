@@ -251,8 +251,6 @@ export default class ThumbyPlugin extends Plugin {
 			}
 		}
 
-
-
 		const container = el.createEl('a', { href: info.url });
 		container.addClass('thumbnail');
 		const imgEl = container.createEl('img', { attr: { 'src': thumbnailUrl } });
@@ -261,6 +259,18 @@ export default class ThumbyPlugin extends Plugin {
 		textBox.addClass('thumbnail-text');
 		textBox.createDiv({text: info.title, title: info.title}).addClass('thumbnail-title');
 		textBox.createEl('a', {text: info.author, href: info.authorUrl, title: info.author}).addClass('thumbnail-author');
+
+    	const isPlaylist = this.isPlaylist(info.url);
+		console.log(isPlaylist);
+		if(isPlaylist){
+			const graphic = container.createEl("svg", {
+				height: "24",
+				width: "24",
+				viewBox: "0 0 24 24"
+			});
+			const path = graphic.createEl("path", {d: "M22 7H2v1h20V7zm-9 5H2v-1h11v1zm0 4H2v-1h11v1zm2 3v-8l7 4-7 4z});
+		}
+
 
 		const timestamp = this.getTimestamp(info.url);
 		if(timestamp !== ''){
@@ -309,6 +319,10 @@ export default class ThumbyPlugin extends Plugin {
 		if(dummy){
 			el.removeChild(dummy);
 		}
+	}
+
+	isPlaylist(url: string): boolean {
+		return url.contains("&list=");
 	}
 
 	getTimestamp(url: string): string {
@@ -640,6 +654,7 @@ export default class ThumbyPlugin extends Plugin {
 				info.title = res.json.title;
 				info.author = res.json.author_name;
 				info.authorUrl = res.json.author_url;
+
 				info.vidFound = true;
 			}
 			else if(this.settings.youtubeApiKey && isYoutube) {
