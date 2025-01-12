@@ -33,13 +33,13 @@ const DEFAULT_SETTINGS: Partial<ThumbySettings> = {
 
 const URL_TYPES = {
 	youtube: [
-		{match: 'https://www.youtube.com/watch?v=', idPattern: /v=([-\w\d]+)/},
-		{match: 'https://youtu.be/', idPattern: /youtu.be\/([-\w\d]+)/},
+		{match: 'youtube.com/watch?v=', idPattern: /v=([-\w\d]+)/},
+		{match: 'youtu.be/', idPattern: /youtu.be\/([-\w\d]+)/},
 		{match: 'youtube.com/shorts/', idPattern: /shorts\/([-\w\d]+)/},
 		{match: 'youtube.com/live/', idPattern: /live\/(\w+)/}
 	],
 	vimeo: [
-		{match: 'https://vimeo.com/', idPattern: /vimeo.com\/([\w\d]+)/}
+		{match: 'vimeo.com/', idPattern: /vimeo.com\/([\w\d]+)/}
 	]
 };
 
