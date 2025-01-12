@@ -64,7 +64,6 @@ export default class ThumbyPlugin extends Plugin {
 		const editors = document.querySelectorAll(
 			".workspace-leaf .view-content"
 		);
-		console.log(editors);
 
 		for (const key in editors) {
 			if (Object.prototype.hasOwnProperty.call(editors, key)) {
