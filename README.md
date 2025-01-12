@@ -7,13 +7,16 @@ Works with Youtube and Vimeo.
 <img src="https://raw.githubusercontent.com/Meikul/obsidian-thumbnails/master/demo_images/block_demo.gif" alt="GIF showing how to create a thumbnail with the plugin">
 
 ## Usage
-Place a code block with the `vid` type, and include the link to your video:
+Use the "Insert thumbnail from URL in clipboard" command
+
+***OR***
+
+Manually place a code block with the `vid` type, and include the link to your video:
 ````markdown
 ```vid
 https://youtu.be/dQw4w9WgXcQ
 ```
 ````
-*OR* use the "Insert from clipboard" command (bit faster)
 ## Commands
 ### Insert thumbnail from URL in clipboard
 If you have a video URL in your clipboard, this command will create the code block for you.
@@ -23,9 +26,10 @@ If you have a video URL in your clipboard, this command will automatically creat
 
 <img src="https://raw.githubusercontent.com/Meikul/obsidian-thumbnails/master/demo_images/title_link_demo.gif" alt="GIF demonstrating the insert video title link command" width="480">
 
-## Offline Options
-If you're offline, the thumbnails will just appear like a normal link.
+## Offline Settings
 ### **Save Thumbnail Info**
-If you want your thumbnails to work better offline, you can enable `Save Thumbnail Info` in the settings tab. When offline, the image will be blank but the title and channel will be shown like normal.
+<span style="opacity:0.65">Default: Enabled</span><br/>
+When offline, thumbnails will have blank images but still show the title and channel.
 ### **Save Images**
-If you also want to store the thumbnail images locally, you can enable `Save Images` in the settings tab. Then you will be able to see the images whether you're online or not.
+<span style="opacity:0.65">Default: Disabled</span><br/>
+Store your thumbnail images locally in a location you specify.

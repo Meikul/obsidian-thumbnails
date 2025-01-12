@@ -94,8 +94,8 @@ export default class ThumbySettingTab extends PluginSettingTab {
 			}
 		}
 		new Setting(containerEl)
-			.setName('Responsive Card-Style Thumbnails')
-			.setDesc('Switch to card-style thumbnails for narrow screens')
+			.setName('Responsive Mobile-Style Thumbnails')
+			.setDesc('Switch to mobile-style thumbnails on narrow screens (title below the image)')
 			.addToggle((toggle) =>
 				toggle
 					.setValue(this.plugin.settings.responsiveCardStyle)
