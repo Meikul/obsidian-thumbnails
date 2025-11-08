@@ -3,7 +3,7 @@
 # Obsidian Thumbnails
 This plugin lets you insert video thumbnails into your notes to help you keep track of what you're actually linking.
 
-Works with Youtube and Vimeo.
+Works with YouTube, Vimeo, and Odysee.
 <img src="https://raw.githubusercontent.com/Meikul/obsidian-thumbnails/master/demo_images/block_demo.gif" alt="GIF showing how to create a thumbnail with the plugin">
 
 ## Usage
@@ -17,6 +17,11 @@ Manually place a code block with the `vid` type, and include the link to your vi
 https://youtu.be/dQw4w9WgXcQ
 ```
 ````
+
+**Supported platforms:**
+- YouTube - youtube.com, youtu.be (including Shorts and Live streams)
+- Vimeo - vimeo.com
+- Odysee - odysee.com
 ## Commands
 ### Insert thumbnail from URL in clipboard
 If you have a video URL in your clipboard, this command will create the code block for you.
