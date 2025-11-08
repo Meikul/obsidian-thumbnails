@@ -40,6 +40,9 @@ const URL_TYPES = {
 	],
 	vimeo: [
 		{match: 'vimeo.com/', idPattern: /vimeo.com\/([\w\d]+)/}
+	],
+	odysee: [
+		{match: 'odysee.com/@', idPattern: /odysee\.com\/@([\w-]+:[a-zA-Z0-9]+)\/([\w-]+:[a-zA-Z0-9]+)/}
 	]
 };
 
@@ -672,12 +675,34 @@ export default class ThumbyPlugin extends Plugin {
 				isVimeo = true;
 			}
 		}
+		let isOdysee = false;
+		for (const type of URL_TYPES.odysee) {
+			if (url.includes(type.match)) {
+				isOdysee = true;
+			}
+		}
 
 		// Use oEmbed to get data (https://oembed.com/)
 		if (isYoutube) {
 			reqUrl = `https://www.youtube.com/oembed?format=json&url=${url}`;
 		} else if (isVimeo) {
 			reqUrl = `https://vimeo.com/api/oembed.json?url=${url}`;
+		} else if (isOdysee) {
+			// Odysee doesn't have oEmbed, use HTML scraping
+			try {
+				const odyseeInfo = await this.fetchOdyseeVideoInfo(url);
+				if (odyseeInfo.title) {
+					info.title = odyseeInfo.title;
+					info.author = odyseeInfo.author || "";
+					info.authorUrl = odyseeInfo.authorUrl || "";
+					info.thumbnail = odyseeInfo.thumbnail || "";
+					info.vidFound = true;
+				}
+			} catch (error) {
+				console.error(error);
+				info.networkError = true;
+			}
+			return info;
 		} else {
 			//vid not found
 			return info;
@@ -775,6 +800,14 @@ export default class ThumbyPlugin extends Plugin {
 				}
 			}
 		}
+		const odyseeType = URL_TYPES.odysee[0];
+		if (url.includes(odyseeType.match)) {
+			const matches = url.match(odyseeType.idPattern);
+			if (matches !== null) {
+				// Combine channel and video IDs for unique identifier
+				id = `${matches[1]}_${matches[2]}`;
+			}
+		}
 		return id;
 	}
 
@@ -794,5 +827,54 @@ export default class ThumbyPlugin extends Plugin {
 			console.error(error);
 		}
 		return id;
+	}
+
+	async fetchOdyseeVideoInfo(url: string): Promise<Partial<VidInfo>> {
+		try {
+			const reqParam: RequestUrlParam = {
+				url: url,
+				throw: false,
+			};
+
+			const res = await requestUrl(reqParam);
+
+			if (res.status === 200) {
+				const html = res.text;
+				const jsonLdMatch = html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/);
+
+				if (jsonLdMatch && jsonLdMatch[1]) {
+					const jsonLd = JSON.parse(jsonLdMatch[1]);
+
+					if (jsonLd["@type"] === "VideoObject") {
+						let thumbnailUrl = "";
+						if (Array.isArray(jsonLd.thumbnailUrl)) {
+							thumbnailUrl = jsonLd.thumbnailUrl[0] || "";
+						} else if (typeof jsonLd.thumbnailUrl === "string") {
+							thumbnailUrl = jsonLd.thumbnailUrl;
+						}
+
+						let authorName = "";
+						let authorUrl = "";
+						if (typeof jsonLd.author === "object" && jsonLd.author !== null) {
+							authorName = jsonLd.author.name || "";
+							authorUrl = jsonLd.author.url || "";
+						} else if (typeof jsonLd.author === "string") {
+							authorName = jsonLd.author;
+						}
+
+						return {
+							title: jsonLd.name || jsonLd.title || "",
+							author: authorName,
+							authorUrl: authorUrl,
+							thumbnail: thumbnailUrl,
+						};
+					}
+				}
+			}
+		} catch (error) {
+			console.error("Odysee metadata fetch error:", error);
+		}
+
+		return {};
 	}
 }
